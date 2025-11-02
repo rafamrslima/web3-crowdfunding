@@ -18,16 +18,9 @@ contract CrowdFunding {
 
     uint256 public numberOfCampaigns = 0;
 
-    function createCampaign(
-        address _owner,
-        string memory _title,
-        string memory _description,
-        uint256 _target,
-        uint256 _deadline,
-        string memory _image
-    ) public returns (uint256) {
+    function createCampaign(address _owner, string memory _title, string memory _description,
+    uint256 _target, uint256 _deadline, string memory _image) public returns (uint256) {
         Campaign storage campaign = campaigns[numberOfCampaigns];
-
         require(_deadline > block.timestamp, "The deadline should be a date in the future");
 
         campaign.owner = _owner;
@@ -48,13 +41,26 @@ contract CrowdFunding {
         require(block.timestamp < campaign.deadline, "Campaign has ended");
 
         uint256 amount = msg.value;
-        campaign.donators.push(msg.sender);
-        campaign.donations.push(amount);
 
         (bool sent,) = payable(campaign.owner).call{value: amount}("");
-
         require(sent, "Transfer failed.");
+
         campaign.amountCollected = campaign.amountCollected + amount;
+        campaign.donations.push(amount);
+        campaign.donators.push(msg.sender);
+        campaign.amountCollected = campaign.amountCollected + amount;
+    }
+
+    function withdraw(uint256 _idCampaign) public payable {
+        require(_idCampaign < numberOfCampaigns, "Campaign does not exist");
+        Campaign storage campaign = campaigns[_idCampaign];
+        require(campaign.amountCollected >= campaign.target, "Campaign didn't reach the target");
+        //todo
+    }
+
+    function refundDonators(uint256 _idCampaign) public payable {
+        require(_idCampaign < numberOfCampaigns, "Campaign does not exist");
+        //todo
     }
 
     function getDonators(uint256 _id) public view returns (address[] memory, uint256[] memory) {
