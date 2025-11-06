@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"crypto/ecdsa"
 	"log"
 	"math/big"
 	"os"
@@ -41,12 +42,8 @@ func CreateCampaign(owner common.Address, title string, description string, targ
 	if err != nil {
 		return nil, err
 	}
-	key := os.Getenv("PRIVATE_KEY")
-	key = strings.TrimSpace(key)
-	key = strings.TrimPrefix(key, "0x")
-	key = strings.TrimPrefix(key, "0X")
 
-	privateKey, err := crypto.HexToECDSA(key)
+	privateKey, err := getPrivateKey()
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -84,4 +81,43 @@ func GetCampaigns() ([]crowdfunding.CrowdFundingCampaign, error) {
 	}
 
 	return campaigns, nil
+}
+
+func DonateToCampaign(campaignId big.Int) (*types.Transaction, error) {
+	contract, err := loadContract()
+
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := getPrivateKey()
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
+	chainID := big.NewInt(31337)
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	transaction, err := contract.DonateToCampaign(auth, &campaignId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return transaction, nil
+}
+
+func getPrivateKey() (*ecdsa.PrivateKey, error) {
+	key := os.Getenv("PRIVATE_KEY")
+	key = strings.TrimSpace(key)
+	key = strings.TrimPrefix(key, "0x")
+	key = strings.TrimPrefix(key, "0X")
+
+	privateKey, err := crypto.HexToECDSA(key)
+	return privateKey, err
 }

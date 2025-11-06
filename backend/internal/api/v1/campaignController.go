@@ -11,6 +11,7 @@ import (
 func StartController() {
 	http.HandleFunc("/", homePage)
 	http.HandleFunc("/campaign/create", create)
+	http.HandleFunc("/campaign/donate", donate)
 	http.HandleFunc("/campaign/get", get)
 }
 
@@ -22,7 +23,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 	var campaign dtos.CampaignDto
 	json.NewDecoder(r.Body).Decode(&campaign)
 
-	transaction, err := ethereum.CreateCampaign(campaign.Owner, campaign.Title, campaign.Description, campaign.Target, campaign.Deadline, campaign.Image)
+	transaction, err := ethereum.CreateCampaign(campaign.Owner, campaign.Title, campaign.Description, &campaign.Target, &campaign.Deadline, campaign.Image)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -61,4 +62,8 @@ func get(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error writing response:", err)
 		return
 	}
+}
+
+func donate(w http.ResponseWriter, r *http.Request) {
+
 }
