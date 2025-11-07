@@ -65,5 +65,25 @@ func get(w http.ResponseWriter, r *http.Request) {
 }
 
 func donate(w http.ResponseWriter, r *http.Request) {
+	var donation dtos.DonationDTO
+	json.NewDecoder(r.Body).Decode(&donation)
 
+	transaction, err := ethereum.DonateToCampaign(donation.CampaignId, donation.Value)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(transaction)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		fmt.Println("Error writing response:", err)
+		return
+	}
 }

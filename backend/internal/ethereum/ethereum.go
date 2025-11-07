@@ -83,7 +83,7 @@ func GetCampaigns() ([]crowdfunding.CrowdFundingCampaign, error) {
 	return campaigns, nil
 }
 
-func DonateToCampaign(campaignId big.Int) (*types.Transaction, error) {
+func DonateToCampaign(campaignId big.Int, value int64) (*types.Transaction, error) {
 	contract, err := loadContract()
 
 	if err != nil {
@@ -103,6 +103,7 @@ func DonateToCampaign(campaignId big.Int) (*types.Transaction, error) {
 		return nil, err
 	}
 
+	auth.Value = big.NewInt(value)
 	transaction, err := contract.DonateToCampaign(auth, &campaignId)
 
 	if err != nil {
