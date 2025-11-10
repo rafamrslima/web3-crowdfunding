@@ -174,6 +174,7 @@ func DonateToCampaign(campaignId big.Int, value int64) (*types.Transaction, erro
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 
 	if err != nil {
+		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -181,6 +182,7 @@ func DonateToCampaign(campaignId big.Int, value int64) (*types.Transaction, erro
 	transaction, err := contract.DonateToCampaign(auth, &campaignId)
 
 	if err != nil {
+		log.Printf("error: %v", err)
 		return nil, err
 	}
 

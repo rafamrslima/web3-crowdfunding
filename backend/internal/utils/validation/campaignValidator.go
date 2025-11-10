@@ -28,11 +28,19 @@ func ValidateCampaign(campaign dtos.CampaignDto) error {
 		return errors.New("description cannot exceed 1000 characters")
 	}
 
-	if campaign.Target.Cmp(big.NewInt(0)) <= 0 {
+	wei := new(big.Int)
+	if _, ok := wei.SetString(campaign.Target, 10); !ok {
+		return errors.New("target must be a valid number")
+	}
+	if wei.Cmp(big.NewInt(0)) <= 0 {
 		return errors.New("target must be greater than 0")
 	}
 
-	if campaign.Deadline.Cmp(big.NewInt(0)) <= 0 {
+	date := new(big.Int)
+	if _, ok := date.SetString(campaign.Deadline, 10); !ok {
+		return errors.New("deadline must be a valid timestamp")
+	}
+	if date.Cmp(big.NewInt(0)) <= 0 {
 		return errors.New("deadline must be a positive timestamp")
 	}
 
