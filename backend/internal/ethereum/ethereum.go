@@ -71,7 +71,9 @@ func CreateUnsignedCampaign(campaign dtos.CampaignDto) (dtos.UnsignedTx, error) 
 		return dtos.UnsignedTx{}, err
 	}
 
-	data, err := parsedABI.Pack("createCampaign", campaign.Owner, campaign.Title, campaign.Description, &campaign.Target, &campaign.Deadline, campaign.Image)
+	wei, _ := new(big.Int).SetString(campaign.Target, 10)
+	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
+	data, err := parsedABI.Pack("createCampaign", campaign.Owner, campaign.Title, campaign.Description, wei, deadline, campaign.Image)
 	if err != nil {
 		log.Printf("Error packing function data: %v", err)
 		return dtos.UnsignedTx{}, err
@@ -111,7 +113,7 @@ func CreateUnsignedCampaign(campaign dtos.CampaignDto) (dtos.UnsignedTx, error) 
 	return unsigned, nil
 }
 
-func CreateCampaign(owner common.Address, title string, description string, target *big.Int, deadline *big.Int, image string) (*types.Transaction, error) {
+func CreateCampaign(campaign dtos.CampaignDto) (*types.Transaction, error) {
 	contract, err := loadCrowdfundingClient()
 
 	if err != nil {
@@ -131,7 +133,9 @@ func CreateCampaign(owner common.Address, title string, description string, targ
 		return nil, err
 	}
 
-	transaction, err := contract.CreateCampaign(auth, owner, title, description, target, deadline, image)
+	wei, _ := new(big.Int).SetString(campaign.Target, 10)
+	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
+	transaction, err := contract.CreateCampaign(auth, campaign.Owner, campaign.Title, campaign.Description, wei, deadline, campaign.Image)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err

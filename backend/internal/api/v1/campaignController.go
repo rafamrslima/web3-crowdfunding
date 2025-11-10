@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/big"
 	"net/http"
 	dtos "web3crowdfunding/internal/DTOs"
 	"web3crowdfunding/internal/ethereum"
@@ -72,9 +71,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wei, _ := new(big.Int).SetString(campaign.Target, 10)
-	date, _ := new(big.Int).SetString(campaign.Deadline, 10)
-	transaction, err := ethereum.CreateCampaign(campaign.Owner, campaign.Title, campaign.Description, wei, date, campaign.Image)
+	transaction, err := ethereum.CreateCampaign(campaign)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
