@@ -7,14 +7,19 @@ import (
 	"net/http"
 	dtos "web3crowdfunding/internal/DTOs"
 	"web3crowdfunding/internal/ethereum"
+	"web3crowdfunding/internal/utils/validation"
 )
 
 func StartController() {
-	http.HandleFunc("/", homePage)
-	http.HandleFunc("/campaign/create", create)
-	http.HandleFunc("/campaign/create-unsigned", createUnsigned)
-	http.HandleFunc("/campaign/donate", donate)
-	http.HandleFunc("/campaign/get", get)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", homePage)
+	mux.HandleFunc("/campaign/create", create)
+	mux.HandleFunc("/campaign/create-unsigned", createUnsigned)
+	mux.HandleFunc("/campaign/donate", donate)
+	mux.HandleFunc("/campaign/get", get)
+
+	log.Println("Server starting on port 8080...")
+	log.Fatal(http.ListenAndServe(":8080", WithCORS(mux)))
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +31,13 @@ func createUnsigned(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&campaign); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		log.Printf("Error decoding request body: %v", err)
+		return
+	}
+
+	err := validation.ValidateCampaign(campaign)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Printf("Bad Request: %v", err)
 		return
 	}
 
@@ -115,4 +127,22 @@ func donate(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error writing response:", err)
 		return
 	}
+}
+
+func WithCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		w.Header().Set("Access-Control-Allow-Origin", "*") // or specific domain e.g. http://localhost:5173
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		// Respond to preflight (OPTIONS)
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
