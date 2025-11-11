@@ -16,6 +16,7 @@ func StartController() {
 	mux.HandleFunc("/campaign/create", create)
 	mux.HandleFunc("/campaign/create-unsigned", createUnsigned)
 	mux.HandleFunc("/campaign/donate", donate)
+	mux.HandleFunc("/campaign/donate-unsigned", donateUnsigned)
 	mux.HandleFunc("/campaign/get", get)
 
 	log.Println("Server starting on port 8080...")
@@ -41,7 +42,7 @@ func createUnsigned(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	unsignedCampaign, err := ethereum.CreateUnsignedCampaign(campaign)
+	unsignedCampaign, err := ethereum.BuildCampaignTransaction(campaign)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -71,7 +72,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transaction, err := ethereum.CreateCampaign(campaign)
+	transaction, err := ethereum.ExecuteCampaignCreation(campaign)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -92,7 +93,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 }
 
 func get(w http.ResponseWriter, r *http.Request) {
-	campaigns, err := ethereum.GetCampaigns()
+	campaigns, err := ethereum.FetchAllCampaigns()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -112,11 +113,46 @@ func get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func donateUnsigned(w http.ResponseWriter, r *http.Request) {
+	var donation dtos.DonationDTO
+	if err := json.NewDecoder(r.Body).Decode(&donation); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		log.Printf("Error decoding request body: %v", err)
+		return
+	}
+
+	err := validation.ValidateDonation(donation)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Printf("Bad Request: %v", err)
+		return
+	}
+
+	transaction, err := ethereum.BuildDonationTransaction(donation.CampaignId, donation.Value)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(transaction)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		fmt.Println("Error writing response:", err)
+		return
+	}
+}
+
 func donate(w http.ResponseWriter, r *http.Request) {
 	var donation dtos.DonationDTO
 	json.NewDecoder(r.Body).Decode(&donation)
 
-	transaction, err := ethereum.DonateToCampaign(donation.CampaignId, donation.Value)
+	transaction, err := ethereum.ExecuteDonationToCompaign(donation.CampaignId, donation.Value)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

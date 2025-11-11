@@ -23,7 +23,7 @@ import (
 const defaultABIPath = "contracts/crowdfunding.abi"
 const ethClientAddress = "http://127.0.0.1:8545"
 
-func loadContract() (string, error) {
+func GetContractAddress() (string, error) {
 	contractAddress := os.Getenv("CONTRACT_ADDRESS")
 	if contractAddress == "" {
 		log.Printf("CONTRACT_ADDRESS environment variable not set")
@@ -32,7 +32,7 @@ func loadContract() (string, error) {
 	return contractAddress, nil
 }
 
-func loadEthClient() (*ethclient.Client, error) {
+func connectToEthereumNode() (*ethclient.Client, error) {
 	ethClient, err := ethclient.Dial(ethClientAddress)
 	if err != nil {
 		log.Printf("Error connecting to Ethereum client: %v", err)
@@ -41,14 +41,48 @@ func loadEthClient() (*ethclient.Client, error) {
 	return ethClient, nil
 }
 
-func loadCrowdfundingClient() (crowdfunding.Crowdfunding, error) {
-	contractAddress, err := loadContract()
+func loadPrivateKeyFromEnv() (*ecdsa.PrivateKey, error) {
+	key := os.Getenv("PRIVATE_KEY")
+	key = strings.TrimSpace(key)
+	key = strings.TrimPrefix(key, "0x")
+	key = strings.TrimPrefix(key, "0X")
+
+	privateKey, err := crypto.HexToECDSA(key)
+	return privateKey, err
+}
+
+func getContractABIFilePath() string {
+	abiPath := os.Getenv("CROWDFUNDING_ABI_PATH")
+	if abiPath == "" {
+		return defaultABIPath
+	}
+	return abiPath
+}
+
+func parseContractABI() (abi.ABI, error) {
+	abiPath := getContractABIFilePath()
+	abiBytes, err := os.ReadFile(abiPath)
+	if err != nil {
+		log.Printf("Error reading ABI file from %s: %v", abiPath, err)
+		return abi.ABI{}, err
+	}
+
+	parsedABI, err := abi.JSON(strings.NewReader(string(abiBytes)))
+	if err != nil {
+		log.Printf("Error parsing ABI: %v", err)
+		return abi.ABI{}, err
+	}
+	return parsedABI, nil
+}
+
+func initializeCrowdfundingContract() (crowdfunding.Crowdfunding, error) {
+	contractAddress, err := GetContractAddress()
 
 	if err != nil {
 		return crowdfunding.Crowdfunding{}, err
 	}
 
-	ethClient, err := loadEthClient()
+	ethClient, err := connectToEthereumNode()
 
 	if err != nil {
 		return crowdfunding.Crowdfunding{}, err
@@ -65,8 +99,8 @@ func loadCrowdfundingClient() (crowdfunding.Crowdfunding, error) {
 	return *contract, nil
 }
 
-func CreateUnsignedCampaign(campaign dtos.CampaignDto) (dtos.UnsignedTx, error) {
-	parsedABI, err := getParsedABI()
+func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTx, error) {
+	parsedABI, err := parseContractABI()
 	if err != nil {
 		return dtos.UnsignedTx{}, err
 	}
@@ -79,12 +113,12 @@ func CreateUnsignedCampaign(campaign dtos.CampaignDto) (dtos.UnsignedTx, error) 
 		return dtos.UnsignedTx{}, err
 	}
 
-	contractAddress, err := loadContract()
+	contractAddress, err := GetContractAddress()
 	if err != nil {
 		return dtos.UnsignedTx{}, err
 	}
 
-	ethClient, err := loadEthClient()
+	ethClient, err := connectToEthereumNode()
 	if err != nil {
 		return dtos.UnsignedTx{}, err
 	}
@@ -113,14 +147,14 @@ func CreateUnsignedCampaign(campaign dtos.CampaignDto) (dtos.UnsignedTx, error) 
 	return unsigned, nil
 }
 
-func CreateCampaign(campaign dtos.CampaignDto) (*types.Transaction, error) {
-	contract, err := loadCrowdfundingClient()
+func ExecuteCampaignCreation(campaign dtos.CampaignDto) (*types.Transaction, error) {
+	contract, err := initializeCrowdfundingContract()
 
 	if err != nil {
 		return nil, err
 	}
 
-	privateKey, err := getPrivateKey()
+	privateKey, err := loadPrivateKeyFromEnv()
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -144,8 +178,8 @@ func CreateCampaign(campaign dtos.CampaignDto) (*types.Transaction, error) {
 	return transaction, nil
 }
 
-func GetCampaigns() ([]crowdfunding.CrowdFundingCampaign, error) {
-	contract, err := loadCrowdfundingClient()
+func FetchAllCampaigns() ([]crowdfunding.CrowdFundingCampaign, error) {
+	contract, err := initializeCrowdfundingContract()
 
 	if err != nil {
 		return []crowdfunding.CrowdFundingCampaign{}, err
@@ -161,14 +195,60 @@ func GetCampaigns() ([]crowdfunding.CrowdFundingCampaign, error) {
 	return campaigns, nil
 }
 
-func DonateToCampaign(campaignId big.Int, value int64) (*types.Transaction, error) {
-	contract, err := loadCrowdfundingClient()
+func BuildDonationTransaction(campaignId big.Int, value string) (dtos.UnsignedTx, error) {
+	parsedABI, err := parseContractABI()
+	if err != nil {
+		return dtos.UnsignedTx{}, err
+	}
+
+	data, err := parsedABI.Pack("donateToCampaign", &campaignId)
+	if err != nil {
+		log.Printf("Error packing function data: %v", err)
+		return dtos.UnsignedTx{}, err
+	}
+
+	contractAddress, err := GetContractAddress()
+	if err != nil {
+		return dtos.UnsignedTx{}, err
+	}
+
+	ethClient, err := connectToEthereumNode()
+	if err != nil {
+		return dtos.UnsignedTx{}, err
+	}
+
+	contractAddr := common.HexToAddress(contractAddress)
+	defer ethClient.Close()
+
+	callMsg := geth.CallMsg{
+		To:   &contractAddr,
+		Data: data,
+	}
+
+	gas, err := ethClient.EstimateGas(context.Background(), callMsg)
+	if err != nil {
+		log.Printf("Error estimating gas: %v", err)
+		return dtos.UnsignedTx{}, err
+	}
+
+	unsigned := dtos.UnsignedTx{
+		To:    contractAddr.Hex(),
+		Data:  fmt.Sprintf("0x%x", data),
+		Value: "0x0", // no ETH being sent here
+		Gas:   fmt.Sprintf("0x%x", gas),
+	}
+
+	return unsigned, nil
+}
+
+func ExecuteDonationToCompaign(campaignId big.Int, value string) (*types.Transaction, error) {
+	contract, err := initializeCrowdfundingContract()
 
 	if err != nil {
 		return nil, err
 	}
 
-	privateKey, err := getPrivateKey()
+	privateKey, err := loadPrivateKeyFromEnv()
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -182,7 +262,8 @@ func DonateToCampaign(campaignId big.Int, value int64) (*types.Transaction, erro
 		return nil, err
 	}
 
-	auth.Value = big.NewInt(value)
+	valueBigInt, _ := new(big.Int).SetString(value, 10)
+	auth.Value = valueBigInt
 	transaction, err := contract.DonateToCampaign(auth, &campaignId)
 
 	if err != nil {
@@ -191,38 +272,4 @@ func DonateToCampaign(campaignId big.Int, value int64) (*types.Transaction, erro
 	}
 
 	return transaction, nil
-}
-
-func getPrivateKey() (*ecdsa.PrivateKey, error) {
-	key := os.Getenv("PRIVATE_KEY")
-	key = strings.TrimSpace(key)
-	key = strings.TrimPrefix(key, "0x")
-	key = strings.TrimPrefix(key, "0X")
-
-	privateKey, err := crypto.HexToECDSA(key)
-	return privateKey, err
-}
-
-func getABIPath() string {
-	abiPath := os.Getenv("CROWDFUNDING_ABI_PATH")
-	if abiPath == "" {
-		return defaultABIPath
-	}
-	return abiPath
-}
-
-func getParsedABI() (abi.ABI, error) {
-	abiPath := getABIPath()
-	abiBytes, err := os.ReadFile(abiPath)
-	if err != nil {
-		log.Printf("Error reading ABI file from %s: %v", abiPath, err)
-		return abi.ABI{}, err
-	}
-
-	parsedABI, err := abi.JSON(strings.NewReader(string(abiBytes)))
-	if err != nil {
-		log.Printf("Error parsing ABI: %v", err)
-		return abi.ABI{}, err
-	}
-	return parsedABI, nil
 }

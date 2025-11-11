@@ -50,3 +50,14 @@ func ValidateCampaign(campaign dtos.CampaignDto) error {
 
 	return nil
 }
+
+func ValidateDonation(donation dtos.DonationDTO) error {
+	if donation.CampaignId.Cmp(big.NewInt(0)) < 0 {
+		return errors.New("campaign ID must be non-negative")
+	}
+	wei, _ := new(big.Int).SetString(donation.Value, 10)
+	if wei.Cmp(big.NewInt(0)) <= 0 {
+		return errors.New("donation value must be greater than 0")
+	}
+	return nil
+}
