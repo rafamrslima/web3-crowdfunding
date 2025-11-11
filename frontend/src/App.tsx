@@ -1,14 +1,20 @@
-import { type FormEvent, useState } from "react";
-import { parseEther } from "viem"; // safe ETH -> wei conversion
-import { API_BASE } from "./config";
+import { FormEvent, useEffect, useState } from "react";
+import { createWalletClient, custom, parseEther } from "viem";
+import type { Hex } from "viem";
+import { CHAIN_ID, API_BASE } from "./config";
+
+declare global { interface Window { ethereum?: any } }
 
 function toUnixSeconds(dateStr: string): string {
-  // dateStr expected from <input type="date"> or datetime-local (YYYY-MM-DD or ISO)
   const ms = new Date(dateStr).getTime();
   return Math.floor(ms / 1000).toString();
 }
 
 export default function App() {
+  const [account, setAccount] = useState<`0x${string}` | null>(null);
+  const walletClient = window.ethereum
+    ? createWalletClient({ chain: { id: CHAIN_ID } as any, transport: custom(window.ethereum) })
+    : null;
   // Defaults (editable in the UI)
   const [owner, setOwner] = useState("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
   const [title, setTitle] = useState("Save the Amazon river");
@@ -20,8 +26,45 @@ export default function App() {
   const [deadlineDate, setDeadlineDate] = useState(defaultDeadlineISO);
   const [image, setImage] = useState("");
 
+  async function connectWallet() {
+    if (!walletClient) {
+      console.error("MetaMask not found");
+      return;
+    }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    const current = await walletClient.getChainId();
+    if (current !== CHAIN_ID) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x" + CHAIN_ID.toString(16) }],
+        });
+      } catch {
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: "0x" + CHAIN_ID.toString(16),
+            chainName: "Anvil Local",
+            nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+            rpcUrls: ["http://127.0.0.1:8545"],
+          }],
+        });
+      }
+    }
+
+    const [addr] = await walletClient.getAddresses();
+    setAccount(addr);
+    setOwner(addr); // preload owner field, but it stays editable
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+
+    if (!walletClient || !account) {
+      console.error("Connect wallet first");
+      return;
+    }
 
     // Basic guard: deadline must be in the future
     const nowSec = Math.floor(Date.now() / 1000);
@@ -50,22 +93,33 @@ export default function App() {
       image: image || ""                  // keep as empty string if not provided
     };
 
-    try {
-      const res = await fetch(`${API_BASE}/campaign/create-unsigned`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json().catch(() => ({}));
-      console.log("API response:", data); // log payload body
+    const res = await fetch(`${API_BASE}/campaign/create-unsigned`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const built = await res.json();
+    console.log("API response (unsigned tx):", built);
     if (!res.ok) {
-      console.error("API error:", res.status, res.statusText);
-    } else {
-      console.log("Request sent successfully");
+      console.error("API error", res.status, res.statusText, built);
+      return;
     }
-    } catch (err: unknown) {
-      console.error(err);
-      alert("Network error. See console for details.");
+
+    try {
+      const txHash = await walletClient.sendTransaction({
+        account,
+        to: built.to as `0x${string}`,
+        data: built.data as Hex,
+        // value/gas come as hex strings; convert to BigInt if present
+        value: built.value ? BigInt(built.value) : 0n,
+        gas: built.gas ? BigInt(built.gas) : undefined,
+        chain: undefined
+        // omit fees/nonce; wallet will populate
+      });
+      console.log("Tx sent:", txHash);
+    } catch (err) {
+      console.error("Wallet sendTransaction error:", err);
     }
   }
 
@@ -75,6 +129,10 @@ export default function App() {
   return (
     <div style={{ maxWidth: 640, margin: "2rem auto", fontFamily: "system-ui, sans-serif" }}>
       <h2>Create Campaign</h2>
+
+      <button onClick={connectWallet} style={{ marginBottom: 12 }}>
+        {account ? `Connected: ${account.slice(0, 6)}…${account.slice(-4)}` : "Connect to wallet"}
+      </button>
 
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
         <label>
@@ -93,8 +151,7 @@ export default function App() {
           Title
           <input
             required
-            minLength={3}
-            maxLength={80}
+            minLength={3} maxLength={80}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Save the Amazon river"
@@ -106,8 +163,7 @@ export default function App() {
           Description
           <textarea
             required
-            minLength={10}
-            maxLength={1000}
+            minLength={10} maxLength={1000}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Funding reforestation projects worldwide."
