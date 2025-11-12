@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	dtos "web3crowdfunding/internal/DTOs"
 	"web3crowdfunding/internal/ethereum"
 	"web3crowdfunding/internal/utils/validation"
@@ -13,11 +15,14 @@ import (
 func StartController() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", homePage)
-	mux.HandleFunc("/campaign/create", create)
-	mux.HandleFunc("/campaign/create-unsigned", createUnsigned)
-	mux.HandleFunc("/campaign/donate", donate)
-	mux.HandleFunc("/campaign/donate-unsigned", donateUnsigned)
-	mux.HandleFunc("/campaign/get", get)
+
+	mux.HandleFunc("/api/v1/campaigns", getAll)
+	mux.HandleFunc("/api/v1/campaigns/{id}", getById)
+	mux.HandleFunc("/api/v1/campaigns/create", create)
+	mux.HandleFunc("/api/v1/campaigns/unsigned", createUnsigned)
+
+	mux.HandleFunc("/api/v1/donations", donate)
+	mux.HandleFunc("/api/v1/donations/unsigned", donateUnsigned)
 
 	log.Println("Server starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", WithCORS(mux)))
@@ -92,10 +97,48 @@ func create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func get(w http.ResponseWriter, r *http.Request) {
+func getAll(w http.ResponseWriter, r *http.Request) {
 	campaigns, err := ethereum.FetchAllCampaigns()
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(campaigns)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		fmt.Println("Error writing response:", err)
+		return
+	}
+}
+
+func getById(w http.ResponseWriter, r *http.Request) {
+	campaignId := r.PathValue("id")
+
+	if campaignId == "" {
+		campaignId = "0"
+	}
+
+	campaignIdConverted, err := strconv.Atoi(campaignId)
+	if err != nil {
+		log.Println("Bad request:", campaignIdConverted)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	campaigns, err := ethereum.FetchCampaignById(campaignIdConverted)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

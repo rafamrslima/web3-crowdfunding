@@ -195,6 +195,26 @@ func FetchAllCampaigns() ([]crowdfunding.CrowdFundingCampaign, error) {
 	return campaigns, nil
 }
 
+func FetchCampaignById(campaignId int) (crowdfunding.CrowdFundingCampaign, error) {
+	contract, err := initializeCrowdfundingContract()
+
+	if err != nil {
+		return crowdfunding.CrowdFundingCampaign{}, err
+	}
+
+	campaigns, err := contract.GetCampaigns(&bind.CallOpts{})
+
+	if err != nil {
+		log.Printf("error: %v", err)
+		return crowdfunding.CrowdFundingCampaign{}, err
+	}
+
+	if campaignId+1 > len(campaigns) {
+		return crowdfunding.CrowdFundingCampaign{}, fmt.Errorf("campaign ID %d not found", campaignId)
+	}
+	return campaigns[campaignId], nil
+}
+
 func BuildDonationTransaction(campaignId big.Int, value string) (dtos.UnsignedTx, error) {
 	parsedABI, err := parseContractABI()
 	if err != nil {
