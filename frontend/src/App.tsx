@@ -1,7 +1,8 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { createWalletClient, custom, parseEther } from "viem";
 import type { Hex } from "viem";
 import { CHAIN_ID, API_BASE } from "./config";
+import "./App.css";
 
 declare global { interface Window { ethereum?: any } }
 
@@ -25,6 +26,19 @@ export default function App() {
   const defaultDeadlineISO = new Date(1794268800 * 1000).toISOString().slice(0, 10);
   const [deadlineDate, setDeadlineDate] = useState(defaultDeadlineISO);
   const [image, setImage] = useState("");
+
+  // UI state management
+  const [isCreating, setIsCreating] = useState(false);
+  const [successTxHash, setSuccessTxHash] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Clear messages when user starts editing form
+  const clearMessages = () => {
+    if (successTxHash || errorMessage) {
+      setSuccessTxHash(null);
+      setErrorMessage(null);
+    }
+  };
 
   async function connectWallet() {
     if (!walletClient) {
@@ -58,55 +72,66 @@ export default function App() {
     setOwner(addr); // preload owner field, but it stays editable
   }
 
+  function disconnectWallet() {
+    setAccount(null);
+    setOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8"); // Reset to default
+    setSuccessTxHash(null);
+    setErrorMessage(null);
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!walletClient || !account) {
-      console.error("Connect wallet first");
-      return;
-    }
-
-    // Basic guard: deadline must be in the future
-    const nowSec = Math.floor(Date.now() / 1000);
-    const deadlineSec = Number(toUnixSeconds(deadlineDate));
-    if (deadlineSec <= nowSec) {
-      alert("Deadline must be in the future.");
-      return;
-    }
-
-    // Convert ETH → wei (as string)
-    let targetWeiStr = "0";
-    try {
-      const wei = parseEther(targetEth); // returns bigint wei
-      targetWeiStr = wei.toString();
-    } catch {
-      alert("Invalid ETH amount");
-      return;
-    }
-
-    const payload = {
-      owner: owner,
-      title: title,
-      description: description,
-      target: targetWeiStr,               // wei (string)
-      deadline: deadlineSec.toString(),   // unix seconds (string)
-      image: image || ""                  // keep as empty string if not provided
-    };
-
-    const res = await fetch(`${API_BASE}/campaign/create-unsigned`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const built = await res.json();
-    console.log("API response (unsigned tx):", built);
-    if (!res.ok) {
-      console.error("API error", res.status, res.statusText, built);
-      return;
-    }
+    // Reset previous states
+    setErrorMessage(null);
+    setSuccessTxHash(null);
+    setIsCreating(true);
 
     try {
+      if (!walletClient || !account) {
+        throw new Error("Please connect wallet first");
+      }
+
+      // Basic guard: deadline must be in the future
+      const nowSec = Math.floor(Date.now() / 1000);
+      const deadlineSec = Number(toUnixSeconds(deadlineDate));
+      if (deadlineSec <= nowSec) {
+        throw new Error("Deadline must be in the future");
+      }
+
+      // Convert ETH → wei (as string)
+      let targetWeiStr = "0";
+      try {
+        const wei = parseEther(targetEth); // returns bigint wei
+        targetWeiStr = wei.toString();
+      } catch {
+        throw new Error("Invalid ETH amount");
+      }
+
+      const payload = {
+        owner: owner,
+        title: title,
+        description: description,
+        target: targetWeiStr,               // wei (string)
+        deadline: deadlineSec.toString(),   // unix seconds (string)
+        image: image || ""                  // keep as empty string if not provided
+      };
+
+      console.log("Creating unsigned transaction...");
+      const res = await fetch(`${API_BASE}/campaign/create-unsigned`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const built = await res.json();
+      console.log("API response (unsigned tx):", built);
+      
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status} ${res.statusText} - ${JSON.stringify(built)}`);
+      }
+
+      console.log("Requesting MetaMask signature...");
       const txHash = await walletClient.sendTransaction({
         account,
         to: built.to as `0x${string}`,
@@ -117,9 +142,24 @@ export default function App() {
         chain: undefined
         // omit fees/nonce; wallet will populate
       });
-      console.log("Tx sent:", txHash);
+      
+      console.log("✅ Transaction successful:", txHash);
+      setSuccessTxHash(txHash);
+      
     } catch (err) {
-      console.error("Wallet sendTransaction error:", err);
+      console.error("Campaign creation error:", err);
+      const error = err as Error;
+      
+      // Handle specific error types
+      if (error.message?.includes("User rejected") || error.message?.includes("rejected")) {
+        setErrorMessage("Transaction was rejected by user");
+      } else if (error.message?.includes("insufficient funds")) {
+        setErrorMessage("Insufficient ETH balance for transaction");
+      } else {
+        setErrorMessage(error.message || "Failed to create campaign");
+      }
+    } finally {
+      setIsCreating(false);
     }
   }
 
@@ -127,90 +167,139 @@ export default function App() {
   const todayISO = new Date().toISOString().slice(0, 10);
 
   return (
-    <div style={{ maxWidth: 640, margin: "2rem auto", fontFamily: "system-ui, sans-serif" }}>
-      <h2>Create Campaign</h2>
+    <div className="app-container">
+      <h1 className="app-title">🚀 Create Crowdfunding Campaign</h1>
 
-      <button onClick={connectWallet} style={{ marginBottom: 12 }}>
-        {account ? `Connected: ${account.slice(0, 6)}…${account.slice(-4)}` : "Connect to wallet"}
-      </button>
+      <div className="wallet-section">
+        <h3>1. Connect Your Wallet</h3>
+        <div className="wallet-controls">
+          {!account ? (
+            <button onClick={connectWallet} className="btn btn-primary">
+              🦊 Connect MetaMask
+            </button>
+          ) : (
+            <>
+              <button className="btn btn-connected" disabled>
+                ✅ <span className="wallet-address">{account.slice(0, 6)}…{account.slice(-4)}</span>
+              </button>
+              <button onClick={disconnectWallet} className="btn btn-danger">
+                🔌 Disconnect
+              </button>
+            </>
+          )}
+        </div>
+      </div>
 
-      <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-        <label>
-          Owner (0x address)
-          <input
-            required
-            pattern="^0x[a-fA-F0-9]{40}$"
-            value={owner}
-            onChange={(e) => setOwner(e.target.value)}
-            placeholder="0x..."
-            style={{ width: "100%" }}
-          />
-        </label>
+      <div className="form-container">
+        <h3>2. Campaign Details</h3>
+        <form onSubmit={onSubmit} className="form">
+          <div className="form-group">
+            <label className="form-label">Owner (0x address)</label>
+            <input
+              required
+              pattern="^0x[a-fA-F0-9]{40}$"
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              placeholder="0x..."
+              className="form-input"
+            />
+          </div>
 
-        <label>
-          Title
-          <input
-            required
-            minLength={3} maxLength={80}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Save the Amazon river"
-            style={{ width: "100%" }}
-          />
-        </label>
+          <div className="form-group">
+            <label className="form-label">Title</label>
+            <input
+              required
+              minLength={3} maxLength={80}
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                clearMessages();
+              }}
+              placeholder="Save the Amazon river"
+              className="form-input"
+            />
+          </div>
 
-        <label>
-          Description
-          <textarea
-            required
-            minLength={10} maxLength={1000}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Funding reforestation projects worldwide."
-            rows={4}
-            style={{ width: "100%" }}
-          />
-        </label>
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea
+              required
+              minLength={10} maxLength={1000}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Funding reforestation projects worldwide."
+              rows={4}
+              className="form-input form-textarea"
+            />
+          </div>
 
-        <label>
-          Target (in ETH)
-          <input
-            required
-            inputMode="decimal"
-            min="0"
-            step="0.000000000000000001"
-            value={targetEth}
-            onChange={(e) => setTargetEth(e.target.value)}
-            placeholder="234"
-            style={{ width: "100%" }}
-          />
-        </label>
+          <div className="form-group">
+            <label className="form-label">Target (in ETH)</label>
+            <input
+              required
+              inputMode="decimal"
+              min="0"
+              step="0.000000000000000001"
+              value={targetEth}
+              onChange={(e) => setTargetEth(e.target.value)}
+              placeholder="1"
+              className="form-input"
+            />
+          </div>
 
-        <label>
-          Deadline (date in the future)
-          <input
-            required
-            type="date"
-            min={todayISO}
-            value={deadlineDate}
-            onChange={(e) => setDeadlineDate(e.target.value)}
-            style={{ width: "100%" }}
-          />
-        </label>
+          <div className="form-group">
+            <label className="form-label">Deadline (date in the future)</label>
+            <input
+              required
+              type="date"
+              min={todayISO}
+              value={deadlineDate}
+              onChange={(e) => setDeadlineDate(e.target.value)}
+              className="form-input"
+            />
+          </div>
 
-        <label>
-          Image URL (optional)
-          <input
-            type="url"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="https://example.com/image.png"
-            style={{ width: "100%" }}
-          />
-        </label>
+          <div className="form-group">
+            <label className="form-label">Image URL (optional)</label>
+            <input
+              type="url"
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              placeholder="https://example.com/image.png"
+              className="form-input"
+            />
+          </div>
 
-        <button type="submit">Create campaign</button>
-      </form>
+          <button 
+            type="submit" 
+            disabled={isCreating || !account}
+            className={`btn submit-button ${isCreating ? 'btn-secondary' : 'btn-success'}`}
+          >
+            {isCreating && <span className="loading-spinner"></span>}
+            {isCreating ? 'Creating Campaign...' : 'Create Campaign'}
+          </button>
+
+          {/* Success Message */}
+          {successTxHash && (
+            <div className="message-box message-success">
+              <h4 className="message-title">✅ Campaign Created Successfully!</h4>
+              <p className="message-text">Your campaign has been created and submitted to the blockchain.</p>
+              <p className="message-text">
+                <strong>Transaction ID:</strong>
+                <code className="transaction-hash">{successTxHash}</code>
+              </p>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="message-box message-error">
+              <h4 className="message-title">❌ Error</h4>
+              <p className="message-text">{errorMessage}</p>
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   );
 }
