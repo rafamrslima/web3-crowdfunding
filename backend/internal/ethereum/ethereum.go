@@ -10,6 +10,7 @@ import (
 	"strings"
 	crowdfunding "web3crowdfunding/contracts"
 	dtos "web3crowdfunding/internal/DTOs"
+	"web3crowdfunding/internal/utils"
 
 	geth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -99,28 +100,34 @@ func initializeCrowdfundingContract() (crowdfunding.Crowdfunding, error) {
 	return *contract, nil
 }
 
-func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTx, error) {
+func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxResponse, error) {
 	parsedABI, err := parseContractABI()
 	if err != nil {
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
-	wei, _ := new(big.Int).SetString(campaign.Target, 10)
+	weiTarget, err := utils.ParseEthToWei(campaign.Target)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return dtos.UnsignedTxResponse{}, err
+	}
+	fmt.Printf("wei target: %v", weiTarget)
+
 	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
-	data, err := parsedABI.Pack("createCampaign", campaign.Owner, campaign.Title, campaign.Description, wei, deadline, campaign.Image)
+	data, err := parsedABI.Pack("createCampaign", campaign.Owner, campaign.Title, campaign.Description, weiTarget, deadline, campaign.Image)
 	if err != nil {
 		log.Printf("Error packing function data: %v", err)
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
 	contractAddress, err := GetContractAddress()
 	if err != nil {
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
 	ethClient, err := connectToEthereumNode()
 	if err != nil {
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
 	contractAddr := common.HexToAddress(contractAddress)
@@ -134,10 +141,10 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTx, error
 	gas, err := ethClient.EstimateGas(context.Background(), callMsg)
 	if err != nil {
 		log.Printf("Error estimating gas: %v", err)
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
-	unsigned := dtos.UnsignedTx{
+	unsigned := dtos.UnsignedTxResponse{
 		To:    contractAddr.Hex(),
 		Data:  fmt.Sprintf("0x%x", data),
 		Value: "0x0", // no ETH being sent here
@@ -162,14 +169,20 @@ func ExecuteCampaignCreation(campaign dtos.CampaignDto) (*types.Transaction, err
 
 	chainID := big.NewInt(31337)
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-
 	if err != nil {
+		log.Printf("error: %v", err)
 		return nil, err
 	}
 
-	wei, _ := new(big.Int).SetString(campaign.Target, 10)
+	weiTarget, err := utils.ParseEthToWei(campaign.Target)
+	fmt.Printf("wei target: %v", weiTarget)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
 	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
-	transaction, err := contract.CreateCampaign(auth, campaign.Owner, campaign.Title, campaign.Description, wei, deadline, campaign.Image)
+	transaction, err := contract.CreateCampaign(auth, campaign.Owner, campaign.Title, campaign.Description, weiTarget, deadline, campaign.Image)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -215,53 +228,66 @@ func FetchCampaignById(campaignId int) (crowdfunding.CrowdFundingCampaign, error
 	return campaigns[campaignId], nil
 }
 
-func BuildDonationTransaction(campaignId big.Int, value string) (dtos.UnsignedTx, error) {
+func BuildDonationTransaction(campaignId int, value string) (dtos.UnsignedTxResponse, error) {
 	parsedABI, err := parseContractABI()
 	if err != nil {
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
-	data, err := parsedABI.Pack("donateToCampaign", &campaignId)
+	fmt.Printf("campaign id: %v", campaignId)
+
+	campaignIdBigInt := big.NewInt(int64(campaignId))
+	data, err := parsedABI.Pack("donateToCampaign", campaignIdBigInt)
 	if err != nil {
 		log.Printf("Error packing function data: %v", err)
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
 	contractAddress, err := GetContractAddress()
 	if err != nil {
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
 	ethClient, err := connectToEthereumNode()
 	if err != nil {
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
 	contractAddr := common.HexToAddress(contractAddress)
 	defer ethClient.Close()
 
+	valueInWei, err := utils.ParseEthToWei(value)
+	fmt.Printf("wei parsed: %v /n", valueInWei)
+	if err != nil {
+		log.Printf("Error: %v", err)
+		return dtos.UnsignedTxResponse{}, err
+	}
+
 	callMsg := geth.CallMsg{
-		To:   &contractAddr,
-		Data: data,
+		To:    &contractAddr,
+		Data:  data,
+		Value: valueInWei,
 	}
 
 	gas, err := ethClient.EstimateGas(context.Background(), callMsg)
 	if err != nil {
 		log.Printf("Error estimating gas: %v", err)
-		return dtos.UnsignedTx{}, err
+		return dtos.UnsignedTxResponse{}, err
 	}
 
-	unsigned := dtos.UnsignedTx{
+	unsigned := dtos.UnsignedTxResponse{
 		To:    contractAddr.Hex(),
 		Data:  fmt.Sprintf("0x%x", data),
-		Value: "0x0", // no ETH being sent here
+		Value: fmt.Sprintf("0x%x", valueInWei),
 		Gas:   fmt.Sprintf("0x%x", gas),
 	}
+
+	fmt.Printf("object: %v", unsigned)
 
 	return unsigned, nil
 }
 
-func ExecuteDonationToCompaign(campaignId big.Int, value string) (*types.Transaction, error) {
+func ExecuteDonationToCompaign(campaignId int, value string) (*types.Transaction, error) {
 	contract, err := initializeCrowdfundingContract()
 
 	if err != nil {
@@ -282,9 +308,16 @@ func ExecuteDonationToCompaign(campaignId big.Int, value string) (*types.Transac
 		return nil, err
 	}
 
-	valueBigInt, _ := new(big.Int).SetString(value, 10)
-	auth.Value = valueBigInt
-	transaction, err := contract.DonateToCampaign(auth, &campaignId)
+	valueWei, err := utils.ParseEthToWei(value)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
+	auth.Value = valueWei
+
+	campaignIdBigInt := big.NewInt(int64(campaignId))
+	transaction, err := contract.DonateToCampaign(auth, campaignIdBigInt)
 
 	if err != nil {
 		log.Printf("error: %v", err)

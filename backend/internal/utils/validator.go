@@ -1,4 +1,4 @@
-package validation
+package utils
 
 import (
 	"errors"
@@ -28,11 +28,12 @@ func ValidateCampaign(campaign dtos.CampaignDto) error {
 		return errors.New("description cannot exceed 1000 characters")
 	}
 
-	wei := new(big.Int)
-	if _, ok := wei.SetString(campaign.Target, 10); !ok {
-		return errors.New("target must be a valid number")
+	donationInWei, err := ParseEthToWei(campaign.Target)
+	if err != nil {
+		return err
 	}
-	if wei.Cmp(big.NewInt(0)) <= 0 {
+
+	if donationInWei.Cmp(big.NewInt(0)) <= 0 {
 		return errors.New("target must be greater than 0")
 	}
 
@@ -52,11 +53,16 @@ func ValidateCampaign(campaign dtos.CampaignDto) error {
 }
 
 func ValidateDonation(donation dtos.DonationDTO) error {
-	if donation.CampaignId.Cmp(big.NewInt(0)) < 0 {
+	if donation.CampaignId < 0 {
 		return errors.New("campaign ID must be non-negative")
 	}
-	wei, _ := new(big.Int).SetString(donation.Value, 10)
-	if wei.Cmp(big.NewInt(0)) <= 0 {
+
+	donationInWei, err := ParseEthToWei(donation.Value)
+	if err != nil {
+		return err
+	}
+
+	if donationInWei.Cmp(big.NewInt(0)) <= 0 {
 		return errors.New("donation value must be greater than 0")
 	}
 	return nil

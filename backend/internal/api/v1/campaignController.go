@@ -9,7 +9,7 @@ import (
 	"strings"
 	dtos "web3crowdfunding/internal/DTOs"
 	"web3crowdfunding/internal/ethereum"
-	"web3crowdfunding/internal/utils/validation"
+	"web3crowdfunding/internal/utils"
 )
 
 func StartController() {
@@ -40,7 +40,7 @@ func createUnsigned(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := validation.ValidateCampaign(campaign)
+	err := utils.ValidateCampaign(campaign)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Printf("Bad Request: %v", err)
@@ -70,7 +70,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := validation.ValidateCampaign(campaign)
+	err := utils.ValidateCampaign(campaign)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Printf("Bad Request: %v", err)
@@ -159,12 +159,12 @@ func getById(w http.ResponseWriter, r *http.Request) {
 func donateUnsigned(w http.ResponseWriter, r *http.Request) {
 	var donation dtos.DonationDTO
 	if err := json.NewDecoder(r.Body).Decode(&donation); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
 		log.Printf("Error decoding request body: %v", err)
 		return
 	}
 
-	err := validation.ValidateDonation(donation)
+	err := utils.ValidateDonation(donation)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Printf("Bad Request: %v", err)

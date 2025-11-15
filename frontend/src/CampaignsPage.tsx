@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { formatEther, createWalletClient, custom, parseEther } from 'viem';
+import { formatEther, createWalletClient, custom } from 'viem';
 import type { Hex } from 'viem';
 import { API_BASE, CHAIN_ID } from './config';
-import type { Campaign } from './types';
+import type { Campaign, UnsignedTransaction } from './types';
 import './App.css';
 
 declare global { interface Window { ethereum?: any } }
@@ -54,8 +54,11 @@ export default function CampaignsPage() {
 
   const formatWeiToEth = (weiAmount: number): string => {
     try {
-      // Convert to string to handle large numbers, then format
-      return formatEther(BigInt(weiAmount.toString()));
+      // Convert wei (number) to ETH string for display
+      const ethValue = formatEther(BigInt(weiAmount.toString()));
+      // Format to remove unnecessary trailing zeros
+      const formatted = parseFloat(ethValue).toString();
+      return formatted === '0' ? '0' : formatted;
     } catch {
       return '0';
     }
@@ -139,8 +142,8 @@ export default function CampaignsPage() {
     }
 
     const donationAmount = donationAmounts[campaignIndex];
-    if (!donationAmount || parseFloat(donationAmount) <= 0) {
-      setDonationError(prev => ({ ...prev, [campaignIndex]: "Please enter a valid donation amount" }));
+    if (!donationAmount || donationAmount.trim() === '' || parseFloat(donationAmount) <= 0 || isNaN(parseFloat(donationAmount))) {
+      setDonationError(prev => ({ ...prev, [campaignIndex]: "Please enter a valid ETH amount (e.g., 1 or 1.4)" }));
       return;
     }
 
@@ -149,12 +152,10 @@ export default function CampaignsPage() {
     setDonationSuccess(prev => ({ ...prev, [campaignIndex]: null }));
 
     try {
-      // Convert ETH to wei for the API call
-      const weiAmount = parseEther(donationAmount);
-      
+      // Send ETH amount as string directly (e.g., "1" or "1.4")
       const payload = {
         campaignId: campaignIndex,
-        value: weiAmount.toString()
+        value: donationAmount // Send ETH as string
       };
 
       console.log("Creating unsigned donation transaction...", payload);
@@ -171,16 +172,21 @@ export default function CampaignsPage() {
         throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData}`);
       }
 
-      const unsignedTx = await response.json();
+      const unsignedTx: UnsignedTransaction = await response.json();
       console.log("Received unsigned transaction:", unsignedTx);
+
+      // Validate and convert hex values
+      if (!unsignedTx.to || !unsignedTx.data || !unsignedTx.value || !unsignedTx.gas) {
+        throw new Error("Invalid transaction data received from server");
+      }
 
       // Send transaction through MetaMask
       const txHash = await walletClient.sendTransaction({
         account,
         to: unsignedTx.to as `0x${string}`,
         data: unsignedTx.data as Hex,
-        value: unsignedTx.value ? BigInt(unsignedTx.value) : 0n,
-        gas: unsignedTx.gas ? BigInt(unsignedTx.gas) : undefined,
+        value: BigInt(unsignedTx.value), // Convert hex string to BigInt
+        gas: BigInt(unsignedTx.gas), // Convert hex string to BigInt
         chain: undefined
       });
 
@@ -336,12 +342,16 @@ export default function CampaignsPage() {
                   <div className="form-group">
                     <label className="form-label">Donation Amount (ETH)</label>
                     <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Enter ETH amount (e.g., 0.1)"
+                      type="text"
+                      placeholder="Enter ETH amount (e.g., 1 or 1.4)"
                       value={donationAmounts[index] || ""}
-                      onChange={(e) => updateDonationAmount(index, e.target.value)}
+                      onChange={(e) => {
+                        // Only allow numbers, dots, and basic validation
+                        const value = e.target.value;
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          updateDonationAmount(index, value);
+                        }
+                      }}
                       className="form-input"
                     />
                   </div>

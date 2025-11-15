@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { createWalletClient, custom, parseEther } from "viem";
+import { createWalletClient, custom } from "viem";
 import type { Hex } from "viem";
 import { Link } from "react-router-dom";
 import { CHAIN_ID, API_BASE } from "./config";
@@ -22,8 +22,8 @@ export default function CreateCampaignPage() {
   const [owner, setOwner] = useState("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
   const [title, setTitle] = useState("Save the Amazon river");
   const [description, setDescription] = useState("Funding reforestation projects worldwide.");
-  // Show target in ETH to user; convert to wei before sending
-  const [targetEth, setTargetEth] = useState("1"); // 1 ETH (→ 1e18 wei when sending)
+  // Target amount in ETH as string
+  const [targetEth, setTargetEth] = useState("1"); // 1 ETH (backend will convert to wei)
   // Default deadline from the given Unix ts (1794268800) ≈ 2026-...; show as date input
   const defaultDeadlineISO = new Date(1794268800 * 1000).toISOString().slice(0, 10);
   const [deadlineDate, setDeadlineDate] = useState(defaultDeadlineISO);
@@ -101,20 +101,16 @@ export default function CreateCampaignPage() {
         throw new Error("Deadline must be in the future");
       }
 
-      // Convert ETH → wei (as string)
-      let targetWeiStr = "0";
-      try {
-        const wei = parseEther(targetEth); // returns bigint wei
-        targetWeiStr = wei.toString();
-      } catch {
-        throw new Error("Invalid ETH amount");
+      // Validate ETH amount format
+      if (!targetEth || targetEth.trim() === '' || parseFloat(targetEth) <= 0 || isNaN(parseFloat(targetEth))) {
+        throw new Error("Please enter a valid ETH target amount (e.g., 1 or 1.2)");
       }
 
       const payload = {
         owner: owner,
         title: title,
         description: description,
-        target: targetWeiStr,               // wei (string)
+        target: targetEth,                  // ETH (string) - backend will convert to wei
         deadline: deadlineSec.toString(),   // unix seconds (string)
         image: image || ""                  // keep as empty string if not provided
       };
@@ -244,12 +240,17 @@ export default function CreateCampaignPage() {
             <label className="form-label">Target (in ETH)</label>
             <input
               required
-              inputMode="decimal"
-              min="0"
-              step="0.000000000000000001"
+              type="text"
               value={targetEth}
-              onChange={(e) => setTargetEth(e.target.value)}
-              placeholder="1"
+              onChange={(e) => {
+                // Only allow numbers, dots, and basic validation
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  setTargetEth(value);
+                  clearMessages();
+                }
+              }}
+              placeholder="Enter ETH amount (e.g., 1 or 1.2)"
               className="form-input"
             />
           </div>

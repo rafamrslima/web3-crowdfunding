@@ -11,3 +11,10 @@ export interface Campaign {
   Donators: string[];
   Donations: number[];
 }
+
+export interface UnsignedTransaction {
+  to: string; // Contract address
+  data: string; // Transaction data (hex)
+  value: string; // Value in wei (hex)
+  gas: string; // Gas limit (hex)
+}

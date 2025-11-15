@@ -1,6 +1,6 @@
 package dtos
 
-type UnsignedTx struct {
+type UnsignedTxResponse struct {
 	To    string `json:"to"`
 	Data  string `json:"data"`
 	Value string `json:"value"`
