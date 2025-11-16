@@ -10,7 +10,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"web3crowdfunding/internal/db"
 	internalEthereum "web3crowdfunding/internal/ethereum"
+	"web3crowdfunding/internal/models"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -124,4 +126,18 @@ func printCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		out.Deadline.Uint64(),
 		lg.BlockNumber,
 	)
+
+	campaignDbObj := models.CampaignDbEntity{
+		Owner:    owner.Hex(),
+		Title:    out.Title,
+		Target:   out.TargetWei.String(),
+		Deadline: uint64(out.Deadline.Int64()),
+		Block:    lg.BlockNumber,
+	}
+
+	err := db.SaveCreatedCampaign(campaignDbObj)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
