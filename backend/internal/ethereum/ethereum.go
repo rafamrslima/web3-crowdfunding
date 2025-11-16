@@ -111,7 +111,6 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 		log.Printf("error: %v", err)
 		return dtos.UnsignedTxResponse{}, err
 	}
-	fmt.Printf("wei target: %v", weiTarget)
 
 	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
 	data, err := parsedABI.Pack("createCampaign", campaign.Owner, campaign.Title, campaign.Description, weiTarget, deadline, campaign.Image)
@@ -175,7 +174,6 @@ func ExecuteCampaignCreation(campaign dtos.CampaignDto) (*types.Transaction, err
 	}
 
 	weiTarget, err := utils.ParseEthToWei(campaign.Target)
-	fmt.Printf("wei target: %v", weiTarget)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -234,8 +232,6 @@ func BuildDonationTransaction(campaignId int, value string) (dtos.UnsignedTxResp
 		return dtos.UnsignedTxResponse{}, err
 	}
 
-	fmt.Printf("campaign id: %v", campaignId)
-
 	campaignIdBigInt := big.NewInt(int64(campaignId))
 	data, err := parsedABI.Pack("donateToCampaign", campaignIdBigInt)
 	if err != nil {
@@ -257,7 +253,6 @@ func BuildDonationTransaction(campaignId int, value string) (dtos.UnsignedTxResp
 	defer ethClient.Close()
 
 	valueInWei, err := utils.ParseEthToWei(value)
-	fmt.Printf("wei parsed: %v /n", valueInWei)
 	if err != nil {
 		log.Printf("Error: %v", err)
 		return dtos.UnsignedTxResponse{}, err
@@ -281,8 +276,6 @@ func BuildDonationTransaction(campaignId int, value string) (dtos.UnsignedTxResp
 		Value: fmt.Sprintf("0x%x", valueInWei),
 		Gas:   fmt.Sprintf("0x%x", gas),
 	}
-
-	fmt.Printf("object: %v", unsigned)
 
 	return unsigned, nil
 }
