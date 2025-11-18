@@ -174,6 +174,11 @@ func donateUnsigned(w http.ResponseWriter, r *http.Request) {
 	transaction, err := ethereum.BuildDonationTransaction(donation.CampaignId, donation.Value)
 
 	if err != nil {
+		if strings.Contains(err.Error(), "Insufficient funds") {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

@@ -128,6 +128,7 @@ func printCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 	)
 
 	campaignDbObj := models.CampaignDbEntity{
+		Id:       id.Int64(),
 		Owner:    owner.Hex(),
 		Title:    out.Title,
 		Target:   out.TargetWei.String(),
