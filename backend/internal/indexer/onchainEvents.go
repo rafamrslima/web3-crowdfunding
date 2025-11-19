@@ -55,10 +55,6 @@ func StartEventListener() {
 	}
 
 	contractAddr := common.HexToAddress(contractAddress)
-
-	httpClient := startHttpConnection(ctx)
-	defer httpClient.Close()
-
 	wsClient := startWebSocketConnection(ctx)
 	defer wsClient.Close()
 
@@ -72,6 +68,11 @@ func StartEventListener() {
 		log.Fatal("parse abi:", err)
 	}
 
+	listenToCampaignCreation(contractAddr, parsedABI, ctx, wsClient)
+	listenToDonationCreation(contractAddr, parsedABI, ctx, wsClient)
+}
+
+func listenToCampaignCreation(contractAddr common.Address, parsedABI abi.ABI, ctx context.Context, wsClient *ethclient.Client) {
 	events, ok := parsedABI.Events["CampaignCreated"]
 	if !ok {
 		log.Fatal("event CampaignCreated not found in ABI")
@@ -103,6 +104,38 @@ func StartEventListener() {
 	}
 }
 
+func listenToDonationCreation(contractAddr common.Address, parsedABI abi.ABI, ctx context.Context, wsClient *ethclient.Client) {
+	events, ok := parsedABI.Events["DonationReceived"]
+	if !ok {
+		log.Fatal("event DonationReceived not found in ABI")
+	}
+	topic0 := events.ID
+
+	ch := make(chan types.Log)
+	sub, err := wsClient.SubscribeFilterLogs(ctx, ethereum.FilterQuery{
+		Addresses: []common.Address{contractAddr},
+		Topics:    [][]common.Hash{{topic0}},
+	}, ch)
+	if err != nil {
+		log.Fatal("subscribe:", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("shutting down listener")
+			return
+
+		case err := <-sub.Err():
+			log.Println("subscription error:", err)
+			return
+
+		case lg := <-ch:
+			printDonationReceived(parsedABI, lg)
+		}
+	}
+}
+
 func printCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 	id := new(big.Int).SetBytes(lg.Topics[1].Bytes())
 	owner := common.BytesToAddress(lg.Topics[2].Bytes())
@@ -127,6 +160,7 @@ func printCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		lg.BlockNumber,
 	)
 
+	// todo: separate functions.
 	campaignDbObj := models.CampaignDbEntity{
 		Id:       id.Int64(),
 		Owner:    owner.Hex(),
@@ -141,4 +175,9 @@ func printCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		log.Println(err)
 		return
 	}
+}
+
+func printDonationReceived(parsedABI abi.ABI, lg types.Log) {
+	fmt.Printf("donation received.")
+	// todo
 }

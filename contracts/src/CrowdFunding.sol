@@ -22,6 +22,13 @@ contract CrowdFunding {
         uint256 deadline
     );
 
+    event DonationReceived(
+        uint256 indexed id,
+        address indexed receiver,
+        address indexed donor,
+        uint256 amountWei
+    );
+
     mapping(uint256 => Campaign) public campaigns;
     uint256 public numberOfCampaigns = 0;
 
@@ -39,7 +46,7 @@ contract CrowdFunding {
         campaign.amountCollected = 0;
         campaign.image = _image;
 
-        emit CampaignCreated(id, campaign.owner, campaign.title, campaign.target , campaign.deadline);
+        emit CampaignCreated(id, campaign.owner, campaign.title, campaign.target, campaign.deadline);
 
         numberOfCampaigns++;
         return id;
@@ -59,6 +66,8 @@ contract CrowdFunding {
         campaign.donations.push(amount);
         campaign.donators.push(msg.sender);
         campaign.amountCollected = campaign.amountCollected + amount;
+
+        emit DonationReceived(_id, campaign.owner, msg.sender, amount);
     }
 
     function withdraw(uint256 _idCampaign) public payable {
