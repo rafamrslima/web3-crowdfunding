@@ -12,6 +12,7 @@ contract CrowdFunding {
         string image;
         address[] donators;
         uint256[] donations;
+        bool withdrawn;
     }
 
     event CampaignCreated(
@@ -23,10 +24,17 @@ contract CrowdFunding {
     );
 
     event DonationReceived(
-        uint256 indexed id,
+        uint256 indexed campaignId,
         address indexed receiver,
         address indexed donor,
         uint256 amountWei
+    );
+
+    event CampaignWithdrawn(
+        uint256 indexed campaignId,
+        address indexed owner,
+        uint256 amountWei,
+        uint256 timestamp
     );
 
     mapping(uint256 => Campaign) public campaigns;
@@ -45,6 +53,7 @@ contract CrowdFunding {
         campaign.deadline = _deadline;
         campaign.amountCollected = 0;
         campaign.image = _image;
+        campaign.withdrawn = false;
 
         emit CampaignCreated(id, campaign.owner, campaign.title, campaign.target, campaign.deadline);
 
@@ -58,10 +67,6 @@ contract CrowdFunding {
         require(block.timestamp < campaign.deadline, "Campaign has ended");
 
         uint256 amount = msg.value;
-
-        (bool sent,) = payable(campaign.owner).call{value: amount}("");
-        require(sent, "Transfer failed.");
-
         campaign.amountCollected = campaign.amountCollected + amount;
         campaign.donations.push(amount);
         campaign.donators.push(msg.sender);
@@ -70,11 +75,18 @@ contract CrowdFunding {
         emit DonationReceived(_id, campaign.owner, msg.sender, amount);
     }
 
-    function withdraw(uint256 _idCampaign) public payable {
+    function withdraw(uint256 _idCampaign) external {
         require(_idCampaign < numberOfCampaigns, "Campaign does not exist");
         Campaign storage campaign = campaigns[_idCampaign];
         require(campaign.amountCollected >= campaign.target, "Campaign didn't reach the target");
-        //todo
+        require(msg.sender == campaign.owner, "Withdraw should be done by the campaign owner");
+        require(!campaign.withdrawn, "Withdraw already done.");
+
+        (bool sent,) = payable(campaign.owner).call{value: campaign.amountCollected}("");
+        require(sent, "Transfer failed.");
+        campaign.withdrawn = true;
+
+        emit CampaignWithdrawn(_idCampaign, campaign.owner, campaign.amountCollected, block.timestamp);
     }
 
     function refundDonators(uint256 _idCampaign) public payable {
