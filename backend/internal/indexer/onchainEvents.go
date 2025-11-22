@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"web3crowdfunding/internal/db"
@@ -24,16 +25,6 @@ import (
 const ethClientAddress = "//127.0.0.1:8545"
 const defaultABIPath = "contracts/crowdfunding.abi"
 
-func startHttpConnection(ctx context.Context) *ethclient.Client {
-	httpURL := "http:" + ethClientAddress
-
-	httpClient, err := ethclient.DialContext(ctx, httpURL)
-	if err != nil {
-		log.Fatal("http dial:", err)
-	}
-	return httpClient
-}
-
 func startWebSocketConnection(ctx context.Context) *ethclient.Client {
 	wsURL := "ws:" + ethClientAddress
 
@@ -47,7 +38,6 @@ func startWebSocketConnection(ctx context.Context) *ethclient.Client {
 func StartEventListener() {
 	fmt.Println("starting listener...")
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	contractAddress, err := internalEthereum.GetContractAddress()
 	if err != nil {
@@ -56,7 +46,6 @@ func StartEventListener() {
 
 	contractAddr := common.HexToAddress(contractAddress)
 	wsClient := startWebSocketConnection(ctx)
-	defer wsClient.Close()
 
 	abiBytes, err := os.ReadFile(defaultABIPath)
 	if err != nil {
@@ -68,8 +57,28 @@ func StartEventListener() {
 		log.Fatal("parse abi:", err)
 	}
 
-	listenToCampaignCreation(contractAddr, parsedABI, ctx, wsClient)
-	listenToDonationCreation(contractAddr, parsedABI, ctx, wsClient)
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		listenToCampaignCreation(contractAddr, parsedABI, ctx, wsClient)
+	}()
+
+	go func() {
+		defer wg.Done()
+		listenToDonationCreation(contractAddr, parsedABI, ctx, wsClient)
+	}()
+
+	// Wait for shutdown signal or goroutines to complete
+	go func() {
+		<-ctx.Done()
+		fmt.Println("Shutdown signal received, closing WebSocket...")
+		wsClient.Close()
+	}()
+
+	wg.Wait()
+	stop()
 }
 
 func listenToCampaignCreation(contractAddr common.Address, parsedABI abi.ABI, ctx context.Context, wsClient *ethclient.Client) {
@@ -99,7 +108,7 @@ func listenToCampaignCreation(contractAddr common.Address, parsedABI abi.ABI, ct
 			return
 
 		case lg := <-ch:
-			printCampaignCreated(parsedABI, lg)
+			SaveCampaignCreated(parsedABI, lg)
 		}
 	}
 }
@@ -131,12 +140,12 @@ func listenToDonationCreation(contractAddr common.Address, parsedABI abi.ABI, ct
 			return
 
 		case lg := <-ch:
-			printDonationReceived(parsedABI, lg)
+			saveDonationReceived(parsedABI, lg)
 		}
 	}
 }
 
-func printCampaignCreated(parsedABI abi.ABI, lg types.Log) {
+func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 	id := new(big.Int).SetBytes(lg.Topics[1].Bytes())
 	owner := common.BytesToAddress(lg.Topics[2].Bytes())
 
@@ -151,16 +160,6 @@ func printCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		return
 	}
 
-	fmt.Printf("CampaignCreated id=%s owner=%s title=%s targetWei=%s deadline=%d block=%d\n",
-		id.String(),
-		owner.Hex(),
-		out.Title,
-		out.TargetWei.String(),
-		out.Deadline.Uint64(),
-		lg.BlockNumber,
-	)
-
-	// todo: separate functions.
 	campaignDbObj := models.CampaignDbEntity{
 		Id:       id.Int64(),
 		Owner:    owner.Hex(),
@@ -170,14 +169,43 @@ func printCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		Block:    lg.BlockNumber,
 	}
 
-	err := db.SaveCreatedCampaign(campaignDbObj)
+	err := db.SaveCampaignCreated(campaignDbObj)
 	if err != nil {
 		log.Println(err)
 		return
 	}
+
+	fmt.Printf("CampaignCreated id=%s owner=%s title=%s targetWei=%s deadline=%d block=%d\n",
+		id.String(),
+		owner.Hex(),
+		out.Title,
+		out.TargetWei.String(),
+		out.Deadline.Uint64(),
+		lg.BlockNumber,
+	)
 }
 
-func printDonationReceived(parsedABI abi.ABI, lg types.Log) {
-	fmt.Printf("donation received.")
-	// todo
+func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
+	campaignId := new(big.Int).SetBytes(lg.Topics[1].Bytes())
+	receiver := common.BytesToAddress(lg.Topics[2].Bytes())
+	donor := common.BytesToAddress(lg.Topics[3].Bytes())
+
+	var out struct {
+		AmountWei *big.Int
+	}
+
+	if err := parsedABI.UnpackIntoInterface(&out, "DonationReceived", lg.Data); err != nil {
+		log.Println("unpack:", err)
+		return
+	}
+
+	fmt.Printf("DonationReceived campaignId=%s receiver=%s donor=%s amountWei=%s block=%d\n",
+		campaignId.String(),
+		receiver.Hex(),
+		donor.Hex(),
+		out.AmountWei.String(),
+		lg.BlockNumber,
+	)
+
+	// save in the db
 }

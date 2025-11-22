@@ -28,7 +28,7 @@ func connect() (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func SaveCreatedCampaign(campaign models.CampaignDbEntity) error {
+func SaveCampaignCreated(campaign models.CampaignDbEntity) error {
 	pool, err := connect()
 	if err != nil {
 		return err
