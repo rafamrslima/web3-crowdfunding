@@ -78,14 +78,15 @@ contract CrowdFunding {
     function withdraw(uint256 _idCampaign) external {
         require(_idCampaign < numberOfCampaigns, "Campaign does not exist");
         Campaign storage campaign = campaigns[_idCampaign];
+        require(block.timestamp >= campaign.deadline, "Campaign is still ongoing");
         require(campaign.amountCollected >= campaign.target, "Campaign didn't reach the target");
         require(msg.sender == campaign.owner, "Withdraw should be done by the campaign owner");
         require(!campaign.withdrawn, "Withdraw already done.");
 
+        campaign.withdrawn = true;
         (bool sent,) = payable(campaign.owner).call{value: campaign.amountCollected}("");
         require(sent, "Transfer failed.");
-        campaign.withdrawn = true;
-
+        
         emit CampaignWithdrawn(_idCampaign, campaign.owner, campaign.amountCollected, block.timestamp);
     }
 
