@@ -37,7 +37,14 @@ contract CrowdFunding {
         uint256 timestamp
     );
 
+    event RefundIssued(
+        uint256 indexed campaignId,
+        address indexed donor,
+        uint256 totalContribution
+    );
+
     mapping(uint256 => Campaign) public campaigns;
+    mapping(uint256 => mapping(address => uint256)) public contributions;
     uint256 public numberOfCampaigns = 0;
 
     function createCampaign(address _owner, string memory _title, string memory _description,
@@ -67,10 +74,10 @@ contract CrowdFunding {
         require(block.timestamp < campaign.deadline, "Campaign has ended");
 
         uint256 amount = msg.value;
-        campaign.amountCollected = campaign.amountCollected + amount;
         campaign.donations.push(amount);
         campaign.donators.push(msg.sender);
-        campaign.amountCollected = campaign.amountCollected + amount;
+        campaign.amountCollected += amount;
+        contributions[_id][msg.sender] += amount;
 
         emit DonationReceived(_id, campaign.owner, msg.sender, amount);
     }
@@ -90,9 +97,20 @@ contract CrowdFunding {
         emit CampaignWithdrawn(_idCampaign, campaign.owner, campaign.amountCollected, block.timestamp);
     }
 
-    function refundDonators(uint256 _idCampaign) public payable {
+    function refundDonor(uint256 _idCampaign) public {
         require(_idCampaign < numberOfCampaigns, "Campaign does not exist");
-        //todo
+        Campaign storage campaign = campaigns[_idCampaign];
+        require(campaign.deadline < block.timestamp, "Campaign is not ended yet");
+        require(campaign.amountCollected < campaign.target, "Campaign goal was reached, no refund available");
+
+        uint256 totalContribution = contributions[_idCampaign][msg.sender];
+        require(totalContribution > 0, "No donation found");
+
+        contributions[_idCampaign][msg.sender] = 0;
+
+        (bool success, ) = payable(msg.sender).call{value: totalContribution}("");
+        require(success, "Refund failed");
+        emit RefundIssued(_idCampaign, msg.sender, totalContribution);
     }
 
     function getDonators(uint256 _id) public view returns (address[] memory, uint256[] memory) {
