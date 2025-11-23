@@ -8,6 +8,16 @@ CREATE TABLE IF NOT EXISTS campaigns (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS donations (
+  id             BIGINT PRIMARY KEY,
+  campaignId     BIGINT,
+  donor          BYTEA NOT NULL,
+  amount_wei     NUMERIC(78,0) NOT NULL,
+  tx_hash        BYTEA NOT NULL,
+  created_block  BIGINT NOT NULL,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS sync_state (
   id         TEXT PRIMARY KEY,
   last_block BIGINT NOT NULL
