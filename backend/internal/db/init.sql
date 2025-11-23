@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
 );
 
 CREATE TABLE IF NOT EXISTS donations (
-  id             BIGINT PRIMARY KEY,
+  id             BIGSERIAL PRIMARY KEY,
   campaignId     BIGINT,
   donor          BYTEA NOT NULL,
   amount_wei     NUMERIC(78,0) NOT NULL,

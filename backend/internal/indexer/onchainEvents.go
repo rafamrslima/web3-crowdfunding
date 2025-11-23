@@ -58,7 +58,7 @@ func StartEventListener() {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -70,7 +70,11 @@ func StartEventListener() {
 		listenToDonationCreation(contractAddr, parsedABI, ctx, wsClient)
 	}()
 
-	// Wait for shutdown signal or goroutines to complete
+	go func() {
+		defer wg.Done()
+		listenToRefundIssued(contractAddr, parsedABI, ctx, wsClient)
+	}()
+
 	go func() {
 		<-ctx.Done()
 		fmt.Println("Shutdown signal received, closing WebSocket...")
@@ -145,6 +149,38 @@ func listenToDonationCreation(contractAddr common.Address, parsedABI abi.ABI, ct
 	}
 }
 
+func listenToRefundIssued(contractAddr common.Address, parsedABI abi.ABI, ctx context.Context, wsClient *ethclient.Client) {
+	events, ok := parsedABI.Events["RefundIssued"]
+	if !ok {
+		log.Fatal("event RefundIssued not found in ABI")
+	}
+	topic0 := events.ID
+
+	ch := make(chan types.Log)
+	sub, err := wsClient.SubscribeFilterLogs(ctx, ethereum.FilterQuery{
+		Addresses: []common.Address{contractAddr},
+		Topics:    [][]common.Hash{{topic0}},
+	}, ch)
+	if err != nil {
+		log.Fatal("subscribe:", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("shutting down listener")
+			return
+
+		case err := <-sub.Err():
+			log.Println("subscription error:", err)
+			return
+
+		case lg := <-ch:
+			saveRefundIssued(parsedABI, lg)
+		}
+	}
+}
+
 func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 	id := new(big.Int).SetBytes(lg.Topics[1].Bytes())
 	owner := common.BytesToAddress(lg.Topics[2].Bytes())
@@ -161,12 +197,13 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 	}
 
 	campaignDbObj := models.CampaignDbEntity{
-		Id:       id.Int64(),
-		Owner:    owner.Hex(),
-		Title:    out.Title,
-		Target:   out.TargetWei.String(),
-		Deadline: uint64(out.Deadline.Int64()),
-		Block:    lg.BlockNumber,
+		Id:         id.Int64(),
+		Owner:      owner.Hex(),
+		Title:      out.Title,
+		Target:     out.TargetWei.Int64(),
+		Deadline:   uint64(out.Deadline.Int64()),
+		CampaignTx: lg.TxHash.Hex(),
+		Block:      lg.BlockNumber,
 	}
 
 	err := db.SaveCampaignCreated(campaignDbObj)
@@ -175,11 +212,12 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		return
 	}
 
-	fmt.Printf("CampaignCreated id=%s owner=%s title=%s targetWei=%s deadline=%d block=%d\n",
+	fmt.Printf("CampaignCreated id=%s owner=%s title=%s targetWei=%s txHash=%s deadline=%d block=%d\n",
 		id.String(),
 		owner.Hex(),
 		out.Title,
 		out.TargetWei.String(),
+		lg.TxHash,
 		out.Deadline.Uint64(),
 		lg.BlockNumber,
 	)
@@ -187,8 +225,7 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 
 func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 	campaignId := new(big.Int).SetBytes(lg.Topics[1].Bytes())
-	receiver := common.BytesToAddress(lg.Topics[2].Bytes())
-	donor := common.BytesToAddress(lg.Topics[3].Bytes())
+	donor := common.BytesToAddress(lg.Topics[2].Bytes())
 
 	var out struct {
 		AmountWei *big.Int
@@ -199,13 +236,28 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 		return
 	}
 
-	fmt.Printf("DonationReceived campaignId=%s receiver=%s donor=%s amountWei=%s block=%d\n",
+	donationDbObj := models.DonationDbEntity{
+		CampaignId:   campaignId.Int64(),
+		Donor:        donor.Hex(),
+		AmountWei:    out.AmountWei.Int64(),
+		TxHash:       lg.TxHash.Hex(),
+		CreatedBlock: lg.BlockNumber,
+	}
+
+	err := db.SaveDonationReceived(donationDbObj)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	fmt.Printf("DonationReceived campaignId=%s donor=%s amountWei=%s txHash=%s block=%d\n",
 		campaignId.String(),
-		receiver.Hex(),
 		donor.Hex(),
 		out.AmountWei.String(),
+		lg.TxHash,
 		lg.BlockNumber,
 	)
+}
 
-	// save in the db
+func saveRefundIssued(parsedABI abi.ABI, lg types.Log) {
 }

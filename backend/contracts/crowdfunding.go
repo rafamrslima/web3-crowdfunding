@@ -45,7 +45,7 @@ type CrowdFundingCampaign struct {
 
 // CrowdfundingMetaData contains all meta data concerning the Crowdfunding contract.
 var CrowdfundingMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"campaigns\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amountCollected\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"image\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"withdrawn\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"contributions\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"createCampaign\",\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"_description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"_target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"_deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"_image\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"donateToCampaign\",\"inputs\":[{\"name\":\"_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getCampaigns\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structCrowdFunding.Campaign[]\",\"components\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amountCollected\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"image\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"donators\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"donations\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"withdrawn\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDonators\",\"inputs\":[{\"name\":\"_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"numberOfCampaigns\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"refundDonor\",\"inputs\":[{\"name\":\"_idCampaign\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"withdraw\",\"inputs\":[{\"name\":\"_idCampaign\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"CampaignCreated\",\"inputs\":[{\"name\":\"id\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"targetWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CampaignWithdrawn\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amountWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"timestamp\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DonationReceived\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"receiver\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"donor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amountWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RefundIssued\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"donor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"totalContribution\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"campaigns\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amountCollected\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"image\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"withdrawn\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"contributions\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"createCampaign\",\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"_description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"_target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"_deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"_image\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"donateToCampaign\",\"inputs\":[{\"name\":\"_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getCampaigns\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structCrowdFunding.Campaign[]\",\"components\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amountCollected\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"image\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"donators\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"donations\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"withdrawn\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDonators\",\"inputs\":[{\"name\":\"_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"numberOfCampaigns\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"refundDonor\",\"inputs\":[{\"name\":\"_idCampaign\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"withdraw\",\"inputs\":[{\"name\":\"_idCampaign\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"CampaignCreated\",\"inputs\":[{\"name\":\"id\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"targetWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CampaignWithdrawn\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amountWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"timestamp\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DonationReceived\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"donor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amountWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RefundIssued\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"donor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"totalContribution\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
 }
 
 // CrowdfundingABI is the input ABI used to generate the binding from.
@@ -859,56 +859,47 @@ func (it *CrowdfundingDonationReceivedIterator) Close() error {
 // CrowdfundingDonationReceived represents a DonationReceived event raised by the Crowdfunding contract.
 type CrowdfundingDonationReceived struct {
 	CampaignId *big.Int
-	Receiver   common.Address
 	Donor      common.Address
 	AmountWei  *big.Int
 	Raw        types.Log // Blockchain specific contextual infos
 }
 
-// FilterDonationReceived is a free log retrieval operation binding the contract event 0x43287c3057ca71c2f01d2236b70a9e5376f802564d6de4e42634af8cf0e3f18a.
+// FilterDonationReceived is a free log retrieval operation binding the contract event 0x0b5b4c52969ff7329ecf7ee536409fda87812b15a8622bc6e8cdeab3aee14a26.
 //
-// Solidity: event DonationReceived(uint256 indexed campaignId, address indexed receiver, address indexed donor, uint256 amountWei)
-func (_Crowdfunding *CrowdfundingFilterer) FilterDonationReceived(opts *bind.FilterOpts, campaignId []*big.Int, receiver []common.Address, donor []common.Address) (*CrowdfundingDonationReceivedIterator, error) {
+// Solidity: event DonationReceived(uint256 indexed campaignId, address indexed donor, uint256 amountWei)
+func (_Crowdfunding *CrowdfundingFilterer) FilterDonationReceived(opts *bind.FilterOpts, campaignId []*big.Int, donor []common.Address) (*CrowdfundingDonationReceivedIterator, error) {
 
 	var campaignIdRule []interface{}
 	for _, campaignIdItem := range campaignId {
 		campaignIdRule = append(campaignIdRule, campaignIdItem)
-	}
-	var receiverRule []interface{}
-	for _, receiverItem := range receiver {
-		receiverRule = append(receiverRule, receiverItem)
 	}
 	var donorRule []interface{}
 	for _, donorItem := range donor {
 		donorRule = append(donorRule, donorItem)
 	}
 
-	logs, sub, err := _Crowdfunding.contract.FilterLogs(opts, "DonationReceived", campaignIdRule, receiverRule, donorRule)
+	logs, sub, err := _Crowdfunding.contract.FilterLogs(opts, "DonationReceived", campaignIdRule, donorRule)
 	if err != nil {
 		return nil, err
 	}
 	return &CrowdfundingDonationReceivedIterator{contract: _Crowdfunding.contract, event: "DonationReceived", logs: logs, sub: sub}, nil
 }
 
-// WatchDonationReceived is a free log subscription operation binding the contract event 0x43287c3057ca71c2f01d2236b70a9e5376f802564d6de4e42634af8cf0e3f18a.
+// WatchDonationReceived is a free log subscription operation binding the contract event 0x0b5b4c52969ff7329ecf7ee536409fda87812b15a8622bc6e8cdeab3aee14a26.
 //
-// Solidity: event DonationReceived(uint256 indexed campaignId, address indexed receiver, address indexed donor, uint256 amountWei)
-func (_Crowdfunding *CrowdfundingFilterer) WatchDonationReceived(opts *bind.WatchOpts, sink chan<- *CrowdfundingDonationReceived, campaignId []*big.Int, receiver []common.Address, donor []common.Address) (event.Subscription, error) {
+// Solidity: event DonationReceived(uint256 indexed campaignId, address indexed donor, uint256 amountWei)
+func (_Crowdfunding *CrowdfundingFilterer) WatchDonationReceived(opts *bind.WatchOpts, sink chan<- *CrowdfundingDonationReceived, campaignId []*big.Int, donor []common.Address) (event.Subscription, error) {
 
 	var campaignIdRule []interface{}
 	for _, campaignIdItem := range campaignId {
 		campaignIdRule = append(campaignIdRule, campaignIdItem)
-	}
-	var receiverRule []interface{}
-	for _, receiverItem := range receiver {
-		receiverRule = append(receiverRule, receiverItem)
 	}
 	var donorRule []interface{}
 	for _, donorItem := range donor {
 		donorRule = append(donorRule, donorItem)
 	}
 
-	logs, sub, err := _Crowdfunding.contract.WatchLogs(opts, "DonationReceived", campaignIdRule, receiverRule, donorRule)
+	logs, sub, err := _Crowdfunding.contract.WatchLogs(opts, "DonationReceived", campaignIdRule, donorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -940,9 +931,9 @@ func (_Crowdfunding *CrowdfundingFilterer) WatchDonationReceived(opts *bind.Watc
 	}), nil
 }
 
-// ParseDonationReceived is a log parse operation binding the contract event 0x43287c3057ca71c2f01d2236b70a9e5376f802564d6de4e42634af8cf0e3f18a.
+// ParseDonationReceived is a log parse operation binding the contract event 0x0b5b4c52969ff7329ecf7ee536409fda87812b15a8622bc6e8cdeab3aee14a26.
 //
-// Solidity: event DonationReceived(uint256 indexed campaignId, address indexed receiver, address indexed donor, uint256 amountWei)
+// Solidity: event DonationReceived(uint256 indexed campaignId, address indexed donor, uint256 amountWei)
 func (_Crowdfunding *CrowdfundingFilterer) ParseDonationReceived(log types.Log) (*CrowdfundingDonationReceived, error) {
 	event := new(CrowdfundingDonationReceived)
 	if err := _Crowdfunding.contract.UnpackLog(event, "DonationReceived", log); err != nil {

@@ -49,3 +49,25 @@ func SaveCampaignCreated(campaign models.CampaignDbEntity) error {
 	log.Println("Row inserted successfully.")
 	return nil
 }
+
+func SaveDonationReceived(donation models.DonationDbEntity) error {
+	pool, err := connect()
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
+	ctx := context.Background()
+
+	_, err = pool.Exec(ctx,
+		`INSERT INTO donations (campaignId, donor, amount_wei, tx_hash, created_block, created_at) 
+		VALUES ($1, $2, $3, $4, $5, $6)`,
+		donation.CampaignId, donation.Donor, donation.AmountWei, donation.TxHash, donation.CreatedBlock, time.Now())
+
+	if err != nil {
+		return err
+	}
+
+	log.Println("Row inserted successfully.")
+	return nil
+}
