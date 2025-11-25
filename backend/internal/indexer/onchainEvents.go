@@ -24,6 +24,9 @@ import (
 
 const ethClientAddress = "//127.0.0.1:8545"
 const defaultABIPath = "contracts/crowdfunding.abi"
+const campaignCreationEvent = "CampaignCreated"
+const donationReceivedEvent = "DonationReceived"
+const refundIssuedEvent = "RefundIssued"
 
 func startWebSocketConnection(ctx context.Context) *ethclient.Client {
 	wsURL := "ws:" + ethClientAddress
@@ -62,17 +65,17 @@ func StartEventListener() {
 
 	go func() {
 		defer wg.Done()
-		listenToCampaignCreation(contractAddr, parsedABI, ctx, wsClient)
+		listenToEventCreation(contractAddr, parsedABI, ctx, wsClient, campaignCreationEvent)
 	}()
 
 	go func() {
 		defer wg.Done()
-		listenToDonationCreation(contractAddr, parsedABI, ctx, wsClient)
+		listenToEventCreation(contractAddr, parsedABI, ctx, wsClient, donationReceivedEvent)
 	}()
 
 	go func() {
 		defer wg.Done()
-		listenToRefundIssued(contractAddr, parsedABI, ctx, wsClient)
+		listenToEventCreation(contractAddr, parsedABI, ctx, wsClient, refundIssuedEvent)
 	}()
 
 	go func() {
@@ -85,10 +88,10 @@ func StartEventListener() {
 	stop()
 }
 
-func listenToCampaignCreation(contractAddr common.Address, parsedABI abi.ABI, ctx context.Context, wsClient *ethclient.Client) {
-	events, ok := parsedABI.Events["CampaignCreated"]
+func listenToEventCreation(contractAddr common.Address, parsedABI abi.ABI, ctx context.Context, wsClient *ethclient.Client, eventName string) {
+	events, ok := parsedABI.Events[eventName]
 	if !ok {
-		log.Fatal("event CampaignCreated not found in ABI")
+		log.Fatalf("event %v not found in ABI", eventName)
 	}
 	topic0 := events.ID
 
@@ -112,71 +115,16 @@ func listenToCampaignCreation(contractAddr common.Address, parsedABI abi.ABI, ct
 			return
 
 		case lg := <-ch:
-			SaveCampaignCreated(parsedABI, lg)
-		}
-	}
-}
-
-func listenToDonationCreation(contractAddr common.Address, parsedABI abi.ABI, ctx context.Context, wsClient *ethclient.Client) {
-	events, ok := parsedABI.Events["DonationReceived"]
-	if !ok {
-		log.Fatal("event DonationReceived not found in ABI")
-	}
-	topic0 := events.ID
-
-	ch := make(chan types.Log)
-	sub, err := wsClient.SubscribeFilterLogs(ctx, ethereum.FilterQuery{
-		Addresses: []common.Address{contractAddr},
-		Topics:    [][]common.Hash{{topic0}},
-	}, ch)
-	if err != nil {
-		log.Fatal("subscribe:", err)
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			log.Println("shutting down listener")
-			return
-
-		case err := <-sub.Err():
-			log.Println("subscription error:", err)
-			return
-
-		case lg := <-ch:
-			saveDonationReceived(parsedABI, lg)
-		}
-	}
-}
-
-func listenToRefundIssued(contractAddr common.Address, parsedABI abi.ABI, ctx context.Context, wsClient *ethclient.Client) {
-	events, ok := parsedABI.Events["RefundIssued"]
-	if !ok {
-		log.Fatal("event RefundIssued not found in ABI")
-	}
-	topic0 := events.ID
-
-	ch := make(chan types.Log)
-	sub, err := wsClient.SubscribeFilterLogs(ctx, ethereum.FilterQuery{
-		Addresses: []common.Address{contractAddr},
-		Topics:    [][]common.Hash{{topic0}},
-	}, ch)
-	if err != nil {
-		log.Fatal("subscribe:", err)
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			log.Println("shutting down listener")
-			return
-
-		case err := <-sub.Err():
-			log.Println("subscription error:", err)
-			return
-
-		case lg := <-ch:
-			saveRefundIssued(parsedABI, lg)
+			switch eventName {
+			case campaignCreationEvent:
+				SaveCampaignCreated(parsedABI, lg)
+			case donationReceivedEvent:
+				saveDonationReceived(parsedABI, lg)
+			case refundIssuedEvent:
+				saveRefundIssued(parsedABI, lg)
+			default:
+				log.Println("event not found.")
+			}
 		}
 	}
 }
@@ -191,7 +139,7 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		Deadline  *big.Int
 	}
 
-	if err := parsedABI.UnpackIntoInterface(&out, "CampaignCreated", lg.Data); err != nil {
+	if err := parsedABI.UnpackIntoInterface(&out, campaignCreationEvent, lg.Data); err != nil {
 		log.Println("unpack:", err)
 		return
 	}
@@ -231,7 +179,7 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 		AmountWei *big.Int
 	}
 
-	if err := parsedABI.UnpackIntoInterface(&out, "DonationReceived", lg.Data); err != nil {
+	if err := parsedABI.UnpackIntoInterface(&out, donationReceivedEvent, lg.Data); err != nil {
 		log.Println("unpack:", err)
 		return
 	}
@@ -260,4 +208,5 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 }
 
 func saveRefundIssued(parsedABI abi.ABI, lg types.Log) {
+	fmt.Printf("RefundIssued")
 }
