@@ -25,22 +25,20 @@ contract CrowdFunding {
 
     event DonationReceived(
         uint256 indexed campaignId,
-        address indexed receiver,
         address indexed donor,
         uint256 amountWei
     );
 
-    event CampaignWithdrawn(
+    event FundsWithdrawn(
         uint256 indexed campaignId,
         address indexed owner,
-        uint256 amountWei,
-        uint256 timestamp
+        uint256 amountWei
     );
 
-    event RefundIssued(
+    event DonationRefunded(
         uint256 indexed campaignId,
         address indexed donor,
-        uint256 totalContribution
+        uint256 totalContributed
     );
 
     mapping(uint256 => Campaign) public campaigns;
@@ -79,7 +77,7 @@ contract CrowdFunding {
         campaign.amountCollected += amount;
         contributions[_id][msg.sender] += amount;
 
-        emit DonationReceived(_id, campaign.owner, msg.sender, amount);
+        emit DonationReceived(_id, msg.sender, amount);
     }
 
     function withdraw(uint256 _idCampaign) external {
@@ -94,7 +92,7 @@ contract CrowdFunding {
         (bool sent,) = payable(campaign.owner).call{value: campaign.amountCollected}("");
         require(sent, "Transfer failed.");
         
-        emit CampaignWithdrawn(_idCampaign, campaign.owner, campaign.amountCollected, block.timestamp);
+        emit FundsWithdrawn(_idCampaign, campaign.owner, campaign.amountCollected);
     }
 
     function refundDonor(uint256 _idCampaign) public {
@@ -103,14 +101,14 @@ contract CrowdFunding {
         require(campaign.deadline < block.timestamp, "Campaign is not ended yet");
         require(campaign.amountCollected < campaign.target, "Campaign goal was reached, no refund available");
 
-        uint256 totalContribution = contributions[_idCampaign][msg.sender];
-        require(totalContribution > 0, "No donation found");
+        uint256 totalContributed = contributions[_idCampaign][msg.sender];
+        require(totalContributed > 0, "No donation found");
 
         contributions[_idCampaign][msg.sender] = 0;
 
-        (bool success, ) = payable(msg.sender).call{value: totalContribution}("");
+        (bool success, ) = payable(msg.sender).call{value: totalContributed}("");
         require(success, "Refund failed");
-        emit RefundIssued(_idCampaign, msg.sender, totalContribution);
+        emit DonationRefunded(_idCampaign, msg.sender, totalContributed);
     }
 
     function getDonators(uint256 _id) public view returns (address[] memory, uint256[] memory) {

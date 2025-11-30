@@ -2,12 +2,10 @@ package models
 
 import "time"
 
-type CampaignDbEntity struct {
-	Id          int64
+type WithdrawDbEntity struct {
+	CampaignId  int64
 	Owner       string
-	Title       string
-	Target      int64
-	Deadline    uint64
+	AmountWei   int64
 	TxHash      string
 	BlockNumber uint64
 	BlockTime   time.Time

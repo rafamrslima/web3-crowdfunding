@@ -45,7 +45,7 @@ type CrowdFundingCampaign struct {
 
 // CrowdfundingMetaData contains all meta data concerning the Crowdfunding contract.
 var CrowdfundingMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"campaigns\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amountCollected\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"image\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"withdrawn\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"contributions\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"createCampaign\",\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"_description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"_target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"_deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"_image\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"donateToCampaign\",\"inputs\":[{\"name\":\"_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getCampaigns\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structCrowdFunding.Campaign[]\",\"components\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amountCollected\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"image\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"donators\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"donations\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"withdrawn\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDonators\",\"inputs\":[{\"name\":\"_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"numberOfCampaigns\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"refundDonor\",\"inputs\":[{\"name\":\"_idCampaign\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"withdraw\",\"inputs\":[{\"name\":\"_idCampaign\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"CampaignCreated\",\"inputs\":[{\"name\":\"id\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"targetWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CampaignWithdrawn\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amountWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"timestamp\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DonationReceived\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"donor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amountWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RefundIssued\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"donor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"totalContribution\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"campaigns\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amountCollected\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"image\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"withdrawn\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"contributions\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"createCampaign\",\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"_description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"_target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"_deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"_image\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"donateToCampaign\",\"inputs\":[{\"name\":\"_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getCampaigns\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structCrowdFunding.Campaign[]\",\"components\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"description\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"target\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amountCollected\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"image\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"donators\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"donations\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"withdrawn\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDonators\",\"inputs\":[{\"name\":\"_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"numberOfCampaigns\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"refundDonor\",\"inputs\":[{\"name\":\"_idCampaign\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"withdraw\",\"inputs\":[{\"name\":\"_idCampaign\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"CampaignCreated\",\"inputs\":[{\"name\":\"id\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"title\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"targetWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DonationReceived\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"donor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amountWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DonationRefunded\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"donor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"totalContributed\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"FundsWithdrawn\",\"inputs\":[{\"name\":\"campaignId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amountWei\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
 }
 
 // CrowdfundingABI is the input ABI used to generate the binding from.
@@ -634,161 +634,6 @@ func (_Crowdfunding *CrowdfundingFilterer) ParseCampaignCreated(log types.Log) (
 	return event, nil
 }
 
-// CrowdfundingCampaignWithdrawnIterator is returned from FilterCampaignWithdrawn and is used to iterate over the raw logs and unpacked data for CampaignWithdrawn events raised by the Crowdfunding contract.
-type CrowdfundingCampaignWithdrawnIterator struct {
-	Event *CrowdfundingCampaignWithdrawn // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *CrowdfundingCampaignWithdrawnIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(CrowdfundingCampaignWithdrawn)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(CrowdfundingCampaignWithdrawn)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *CrowdfundingCampaignWithdrawnIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *CrowdfundingCampaignWithdrawnIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// CrowdfundingCampaignWithdrawn represents a CampaignWithdrawn event raised by the Crowdfunding contract.
-type CrowdfundingCampaignWithdrawn struct {
-	CampaignId *big.Int
-	Owner      common.Address
-	AmountWei  *big.Int
-	Timestamp  *big.Int
-	Raw        types.Log // Blockchain specific contextual infos
-}
-
-// FilterCampaignWithdrawn is a free log retrieval operation binding the contract event 0xf6855da62af7f8886a08b21d9396963710107b9819475543c2ab579138620bf8.
-//
-// Solidity: event CampaignWithdrawn(uint256 indexed campaignId, address indexed owner, uint256 amountWei, uint256 timestamp)
-func (_Crowdfunding *CrowdfundingFilterer) FilterCampaignWithdrawn(opts *bind.FilterOpts, campaignId []*big.Int, owner []common.Address) (*CrowdfundingCampaignWithdrawnIterator, error) {
-
-	var campaignIdRule []interface{}
-	for _, campaignIdItem := range campaignId {
-		campaignIdRule = append(campaignIdRule, campaignIdItem)
-	}
-	var ownerRule []interface{}
-	for _, ownerItem := range owner {
-		ownerRule = append(ownerRule, ownerItem)
-	}
-
-	logs, sub, err := _Crowdfunding.contract.FilterLogs(opts, "CampaignWithdrawn", campaignIdRule, ownerRule)
-	if err != nil {
-		return nil, err
-	}
-	return &CrowdfundingCampaignWithdrawnIterator{contract: _Crowdfunding.contract, event: "CampaignWithdrawn", logs: logs, sub: sub}, nil
-}
-
-// WatchCampaignWithdrawn is a free log subscription operation binding the contract event 0xf6855da62af7f8886a08b21d9396963710107b9819475543c2ab579138620bf8.
-//
-// Solidity: event CampaignWithdrawn(uint256 indexed campaignId, address indexed owner, uint256 amountWei, uint256 timestamp)
-func (_Crowdfunding *CrowdfundingFilterer) WatchCampaignWithdrawn(opts *bind.WatchOpts, sink chan<- *CrowdfundingCampaignWithdrawn, campaignId []*big.Int, owner []common.Address) (event.Subscription, error) {
-
-	var campaignIdRule []interface{}
-	for _, campaignIdItem := range campaignId {
-		campaignIdRule = append(campaignIdRule, campaignIdItem)
-	}
-	var ownerRule []interface{}
-	for _, ownerItem := range owner {
-		ownerRule = append(ownerRule, ownerItem)
-	}
-
-	logs, sub, err := _Crowdfunding.contract.WatchLogs(opts, "CampaignWithdrawn", campaignIdRule, ownerRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(CrowdfundingCampaignWithdrawn)
-				if err := _Crowdfunding.contract.UnpackLog(event, "CampaignWithdrawn", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseCampaignWithdrawn is a log parse operation binding the contract event 0xf6855da62af7f8886a08b21d9396963710107b9819475543c2ab579138620bf8.
-//
-// Solidity: event CampaignWithdrawn(uint256 indexed campaignId, address indexed owner, uint256 amountWei, uint256 timestamp)
-func (_Crowdfunding *CrowdfundingFilterer) ParseCampaignWithdrawn(log types.Log) (*CrowdfundingCampaignWithdrawn, error) {
-	event := new(CrowdfundingCampaignWithdrawn)
-	if err := _Crowdfunding.contract.UnpackLog(event, "CampaignWithdrawn", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
 // CrowdfundingDonationReceivedIterator is returned from FilterDonationReceived and is used to iterate over the raw logs and unpacked data for DonationReceived events raised by the Crowdfunding contract.
 type CrowdfundingDonationReceivedIterator struct {
 	Event *CrowdfundingDonationReceived // Event containing the contract specifics and raw log
@@ -943,9 +788,9 @@ func (_Crowdfunding *CrowdfundingFilterer) ParseDonationReceived(log types.Log) 
 	return event, nil
 }
 
-// CrowdfundingRefundIssuedIterator is returned from FilterRefundIssued and is used to iterate over the raw logs and unpacked data for RefundIssued events raised by the Crowdfunding contract.
-type CrowdfundingRefundIssuedIterator struct {
-	Event *CrowdfundingRefundIssued // Event containing the contract specifics and raw log
+// CrowdfundingDonationRefundedIterator is returned from FilterDonationRefunded and is used to iterate over the raw logs and unpacked data for DonationRefunded events raised by the Crowdfunding contract.
+type CrowdfundingDonationRefundedIterator struct {
+	Event *CrowdfundingDonationRefunded // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -959,7 +804,7 @@ type CrowdfundingRefundIssuedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *CrowdfundingRefundIssuedIterator) Next() bool {
+func (it *CrowdfundingDonationRefundedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -968,7 +813,7 @@ func (it *CrowdfundingRefundIssuedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CrowdfundingRefundIssued)
+			it.Event = new(CrowdfundingDonationRefunded)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -983,7 +828,7 @@ func (it *CrowdfundingRefundIssuedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CrowdfundingRefundIssued)
+		it.Event = new(CrowdfundingDonationRefunded)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -999,29 +844,29 @@ func (it *CrowdfundingRefundIssuedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *CrowdfundingRefundIssuedIterator) Error() error {
+func (it *CrowdfundingDonationRefundedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *CrowdfundingRefundIssuedIterator) Close() error {
+func (it *CrowdfundingDonationRefundedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// CrowdfundingRefundIssued represents a RefundIssued event raised by the Crowdfunding contract.
-type CrowdfundingRefundIssued struct {
-	CampaignId        *big.Int
-	Donor             common.Address
-	TotalContribution *big.Int
-	Raw               types.Log // Blockchain specific contextual infos
+// CrowdfundingDonationRefunded represents a DonationRefunded event raised by the Crowdfunding contract.
+type CrowdfundingDonationRefunded struct {
+	CampaignId       *big.Int
+	Donor            common.Address
+	TotalContributed *big.Int
+	Raw              types.Log // Blockchain specific contextual infos
 }
 
-// FilterRefundIssued is a free log retrieval operation binding the contract event 0x7a482fdeb6bc9a1376f597068a214a7a39472bb2eff1b8cad21ba04f49ddca1b.
+// FilterDonationRefunded is a free log retrieval operation binding the contract event 0x4152e14791691379e08bbc1c4beeb7197ecbf5db73dc45a8c3f946f66a931c03.
 //
-// Solidity: event RefundIssued(uint256 indexed campaignId, address indexed donor, uint256 totalContribution)
-func (_Crowdfunding *CrowdfundingFilterer) FilterRefundIssued(opts *bind.FilterOpts, campaignId []*big.Int, donor []common.Address) (*CrowdfundingRefundIssuedIterator, error) {
+// Solidity: event DonationRefunded(uint256 indexed campaignId, address indexed donor, uint256 totalContributed)
+func (_Crowdfunding *CrowdfundingFilterer) FilterDonationRefunded(opts *bind.FilterOpts, campaignId []*big.Int, donor []common.Address) (*CrowdfundingDonationRefundedIterator, error) {
 
 	var campaignIdRule []interface{}
 	for _, campaignIdItem := range campaignId {
@@ -1032,17 +877,17 @@ func (_Crowdfunding *CrowdfundingFilterer) FilterRefundIssued(opts *bind.FilterO
 		donorRule = append(donorRule, donorItem)
 	}
 
-	logs, sub, err := _Crowdfunding.contract.FilterLogs(opts, "RefundIssued", campaignIdRule, donorRule)
+	logs, sub, err := _Crowdfunding.contract.FilterLogs(opts, "DonationRefunded", campaignIdRule, donorRule)
 	if err != nil {
 		return nil, err
 	}
-	return &CrowdfundingRefundIssuedIterator{contract: _Crowdfunding.contract, event: "RefundIssued", logs: logs, sub: sub}, nil
+	return &CrowdfundingDonationRefundedIterator{contract: _Crowdfunding.contract, event: "DonationRefunded", logs: logs, sub: sub}, nil
 }
 
-// WatchRefundIssued is a free log subscription operation binding the contract event 0x7a482fdeb6bc9a1376f597068a214a7a39472bb2eff1b8cad21ba04f49ddca1b.
+// WatchDonationRefunded is a free log subscription operation binding the contract event 0x4152e14791691379e08bbc1c4beeb7197ecbf5db73dc45a8c3f946f66a931c03.
 //
-// Solidity: event RefundIssued(uint256 indexed campaignId, address indexed donor, uint256 totalContribution)
-func (_Crowdfunding *CrowdfundingFilterer) WatchRefundIssued(opts *bind.WatchOpts, sink chan<- *CrowdfundingRefundIssued, campaignId []*big.Int, donor []common.Address) (event.Subscription, error) {
+// Solidity: event DonationRefunded(uint256 indexed campaignId, address indexed donor, uint256 totalContributed)
+func (_Crowdfunding *CrowdfundingFilterer) WatchDonationRefunded(opts *bind.WatchOpts, sink chan<- *CrowdfundingDonationRefunded, campaignId []*big.Int, donor []common.Address) (event.Subscription, error) {
 
 	var campaignIdRule []interface{}
 	for _, campaignIdItem := range campaignId {
@@ -1053,7 +898,7 @@ func (_Crowdfunding *CrowdfundingFilterer) WatchRefundIssued(opts *bind.WatchOpt
 		donorRule = append(donorRule, donorItem)
 	}
 
-	logs, sub, err := _Crowdfunding.contract.WatchLogs(opts, "RefundIssued", campaignIdRule, donorRule)
+	logs, sub, err := _Crowdfunding.contract.WatchLogs(opts, "DonationRefunded", campaignIdRule, donorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1063,8 +908,8 @@ func (_Crowdfunding *CrowdfundingFilterer) WatchRefundIssued(opts *bind.WatchOpt
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CrowdfundingRefundIssued)
-				if err := _Crowdfunding.contract.UnpackLog(event, "RefundIssued", log); err != nil {
+				event := new(CrowdfundingDonationRefunded)
+				if err := _Crowdfunding.contract.UnpackLog(event, "DonationRefunded", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1085,12 +930,166 @@ func (_Crowdfunding *CrowdfundingFilterer) WatchRefundIssued(opts *bind.WatchOpt
 	}), nil
 }
 
-// ParseRefundIssued is a log parse operation binding the contract event 0x7a482fdeb6bc9a1376f597068a214a7a39472bb2eff1b8cad21ba04f49ddca1b.
+// ParseDonationRefunded is a log parse operation binding the contract event 0x4152e14791691379e08bbc1c4beeb7197ecbf5db73dc45a8c3f946f66a931c03.
 //
-// Solidity: event RefundIssued(uint256 indexed campaignId, address indexed donor, uint256 totalContribution)
-func (_Crowdfunding *CrowdfundingFilterer) ParseRefundIssued(log types.Log) (*CrowdfundingRefundIssued, error) {
-	event := new(CrowdfundingRefundIssued)
-	if err := _Crowdfunding.contract.UnpackLog(event, "RefundIssued", log); err != nil {
+// Solidity: event DonationRefunded(uint256 indexed campaignId, address indexed donor, uint256 totalContributed)
+func (_Crowdfunding *CrowdfundingFilterer) ParseDonationRefunded(log types.Log) (*CrowdfundingDonationRefunded, error) {
+	event := new(CrowdfundingDonationRefunded)
+	if err := _Crowdfunding.contract.UnpackLog(event, "DonationRefunded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// CrowdfundingFundsWithdrawnIterator is returned from FilterFundsWithdrawn and is used to iterate over the raw logs and unpacked data for FundsWithdrawn events raised by the Crowdfunding contract.
+type CrowdfundingFundsWithdrawnIterator struct {
+	Event *CrowdfundingFundsWithdrawn // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *CrowdfundingFundsWithdrawnIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(CrowdfundingFundsWithdrawn)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(CrowdfundingFundsWithdrawn)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *CrowdfundingFundsWithdrawnIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *CrowdfundingFundsWithdrawnIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// CrowdfundingFundsWithdrawn represents a FundsWithdrawn event raised by the Crowdfunding contract.
+type CrowdfundingFundsWithdrawn struct {
+	CampaignId *big.Int
+	Owner      common.Address
+	AmountWei  *big.Int
+	Raw        types.Log // Blockchain specific contextual infos
+}
+
+// FilterFundsWithdrawn is a free log retrieval operation binding the contract event 0xf440aec6b52895984d061d622e6edeba6210f7c3e059be920663140c084560d7.
+//
+// Solidity: event FundsWithdrawn(uint256 indexed campaignId, address indexed owner, uint256 amountWei)
+func (_Crowdfunding *CrowdfundingFilterer) FilterFundsWithdrawn(opts *bind.FilterOpts, campaignId []*big.Int, owner []common.Address) (*CrowdfundingFundsWithdrawnIterator, error) {
+
+	var campaignIdRule []interface{}
+	for _, campaignIdItem := range campaignId {
+		campaignIdRule = append(campaignIdRule, campaignIdItem)
+	}
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+
+	logs, sub, err := _Crowdfunding.contract.FilterLogs(opts, "FundsWithdrawn", campaignIdRule, ownerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &CrowdfundingFundsWithdrawnIterator{contract: _Crowdfunding.contract, event: "FundsWithdrawn", logs: logs, sub: sub}, nil
+}
+
+// WatchFundsWithdrawn is a free log subscription operation binding the contract event 0xf440aec6b52895984d061d622e6edeba6210f7c3e059be920663140c084560d7.
+//
+// Solidity: event FundsWithdrawn(uint256 indexed campaignId, address indexed owner, uint256 amountWei)
+func (_Crowdfunding *CrowdfundingFilterer) WatchFundsWithdrawn(opts *bind.WatchOpts, sink chan<- *CrowdfundingFundsWithdrawn, campaignId []*big.Int, owner []common.Address) (event.Subscription, error) {
+
+	var campaignIdRule []interface{}
+	for _, campaignIdItem := range campaignId {
+		campaignIdRule = append(campaignIdRule, campaignIdItem)
+	}
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+
+	logs, sub, err := _Crowdfunding.contract.WatchLogs(opts, "FundsWithdrawn", campaignIdRule, ownerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(CrowdfundingFundsWithdrawn)
+				if err := _Crowdfunding.contract.UnpackLog(event, "FundsWithdrawn", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseFundsWithdrawn is a log parse operation binding the contract event 0xf440aec6b52895984d061d622e6edeba6210f7c3e059be920663140c084560d7.
+//
+// Solidity: event FundsWithdrawn(uint256 indexed campaignId, address indexed owner, uint256 amountWei)
+func (_Crowdfunding *CrowdfundingFilterer) ParseFundsWithdrawn(log types.Log) (*CrowdfundingFundsWithdrawn, error) {
+	event := new(CrowdfundingFundsWithdrawn)
+	if err := _Crowdfunding.contract.UnpackLog(event, "FundsWithdrawn", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"web3crowdfunding/internal/db"
 	internalEthereum "web3crowdfunding/internal/ethereum"
@@ -26,7 +27,8 @@ const ethClientAddress = "//127.0.0.1:8545"
 const defaultABIPath = "contracts/crowdfunding.abi"
 const campaignCreationEvent = "CampaignCreated"
 const donationReceivedEvent = "DonationReceived"
-const refundIssuedEvent = "RefundIssued"
+const fundsWithdrawnEvent = "FundsWithdrawn"
+const donationRefundedEvent = "DonationRefunded"
 
 func startWebSocketConnection(ctx context.Context) *ethclient.Client {
 	wsURL := "ws:" + ethClientAddress
@@ -61,7 +63,7 @@ func StartEventListener() {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
@@ -75,7 +77,12 @@ func StartEventListener() {
 
 	go func() {
 		defer wg.Done()
-		listenToEventCreation(contractAddr, parsedABI, ctx, wsClient, refundIssuedEvent)
+		listenToEventCreation(contractAddr, parsedABI, ctx, wsClient, fundsWithdrawnEvent)
+	}()
+
+	go func() {
+		defer wg.Done()
+		listenToEventCreation(contractAddr, parsedABI, ctx, wsClient, donationRefundedEvent)
 	}()
 
 	go func() {
@@ -120,8 +127,10 @@ func listenToEventCreation(contractAddr common.Address, parsedABI abi.ABI, ctx c
 				SaveCampaignCreated(parsedABI, lg)
 			case donationReceivedEvent:
 				saveDonationReceived(parsedABI, lg)
-			case refundIssuedEvent:
-				saveRefundIssued(parsedABI, lg)
+			case fundsWithdrawnEvent:
+				saveWithdrawCompletion(parsedABI, lg)
+			case donationRefundedEvent:
+				saveDonationRefund(parsedABI, lg)
 			default:
 				log.Println("event not found.")
 			}
@@ -143,15 +152,15 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		log.Println("unpack:", err)
 		return
 	}
-
 	campaignDbObj := models.CampaignDbEntity{
-		Id:         id.Int64(),
-		Owner:      owner.Hex(),
-		Title:      out.Title,
-		Target:     out.TargetWei.Int64(),
-		Deadline:   uint64(out.Deadline.Int64()),
-		CampaignTx: lg.TxHash.Hex(),
-		Block:      lg.BlockNumber,
+		Id:          id.Int64(),
+		Owner:       owner.Hex(),
+		Title:       out.Title,
+		Target:      out.TargetWei.Int64(),
+		Deadline:    uint64(out.Deadline.Int64()),
+		TxHash:      lg.TxHash.Hex(),
+		BlockNumber: lg.BlockNumber,
+		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
 	err := db.SaveCampaignCreated(campaignDbObj)
@@ -185,11 +194,12 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 	}
 
 	donationDbObj := models.DonationDbEntity{
-		CampaignId:   campaignId.Int64(),
-		Donor:        donor.Hex(),
-		AmountWei:    out.AmountWei.Int64(),
-		TxHash:       lg.TxHash.Hex(),
-		CreatedBlock: lg.BlockNumber,
+		CampaignId:  campaignId.Int64(),
+		Donor:       donor.Hex(),
+		AmountWei:   out.AmountWei.Int64(),
+		TxHash:      lg.TxHash.Hex(),
+		BlockNumber: lg.BlockNumber,
+		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
 	err := db.SaveDonationReceived(donationDbObj)
@@ -207,6 +217,76 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 	)
 }
 
-func saveRefundIssued(parsedABI abi.ABI, lg types.Log) {
-	fmt.Printf("RefundIssued")
+func saveWithdrawCompletion(parsedABI abi.ABI, lg types.Log) {
+	campaignId := new(big.Int).SetBytes(lg.Topics[1].Bytes())
+	owner := common.BytesToAddress(lg.Topics[2].Bytes())
+
+	var out struct {
+		AmountWei *big.Int
+	}
+
+	if err := parsedABI.UnpackIntoInterface(&out, fundsWithdrawnEvent, lg.Data); err != nil {
+		log.Println("unpack:", err)
+		return
+	}
+
+	withdrawDbObj := models.WithdrawDbEntity{
+		CampaignId:  campaignId.Int64(),
+		Owner:       owner.Hex(),
+		AmountWei:   out.AmountWei.Int64(),
+		TxHash:      lg.TxHash.Hex(),
+		BlockNumber: lg.BlockNumber,
+		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
+	}
+
+	err := db.SaveWithdrawCompletion(withdrawDbObj)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	fmt.Printf("FundsWithdrawn campaignId=%s owner=%s amountWei=%s txHash=%s block=%d\n",
+		campaignId.String(),
+		owner.Hex(),
+		out.AmountWei.String(),
+		lg.TxHash,
+		lg.BlockNumber,
+	)
+}
+
+func saveDonationRefund(parsedABI abi.ABI, lg types.Log) {
+	campaignId := new(big.Int).SetBytes(lg.Topics[1].Bytes())
+	donor := common.BytesToAddress(lg.Topics[2].Bytes())
+
+	var out struct {
+		TotalContributedWei *big.Int
+	}
+
+	if err := parsedABI.UnpackIntoInterface(&out, donationRefundedEvent, lg.Data); err != nil {
+		log.Println("unpack:", err)
+		return
+	}
+
+	refundDbObj := models.RefundDbEntity{
+		CampaignId:       campaignId.Int64(),
+		Donor:            donor.Hex(),
+		TotalContributed: out.TotalContributedWei.Int64(),
+		TxHash:           lg.TxHash.Hex(),
+		BlockNumber:      lg.BlockNumber,
+		BlockTime:        time.Unix(int64(lg.BlockTimestamp), 0),
+	}
+
+	err := db.SaveRefundIssued(refundDbObj)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	fmt.Printf("Refund Issued campaignId=%s donor=%s totalContributedWei=%s txHash=%s block=%d\n",
+		campaignId.String(),
+		donor.Hex(),
+		out.TotalContributedWei.String(),
+		lg.TxHash,
+		lg.BlockNumber,
+	)
 }

@@ -38,9 +38,9 @@ func SaveCampaignCreated(campaign models.CampaignDbEntity) error {
 	ctx := context.Background()
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO campaigns (campaignId, owner, target_wei, deadline_ts, created_tx, created_block, created_at) 
+		`INSERT INTO campaigns (campaign_id, owner, target_wei, deadline_ts, tx_hash, block_number, block_time) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		campaign.Id, campaign.Owner, campaign.Target, campaign.Deadline, campaign.CampaignTx, campaign.Block, time.Now())
+		campaign.Id, campaign.Owner, campaign.Target, campaign.Deadline, campaign.TxHash, campaign.BlockNumber, campaign.BlockTime)
 
 	if err != nil {
 		return err
@@ -60,9 +60,53 @@ func SaveDonationReceived(donation models.DonationDbEntity) error {
 	ctx := context.Background()
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO donations (campaignId, donor, amount_wei, tx_hash, created_block, created_at) 
+		`INSERT INTO donations (campaign_id, donor, amount_wei, tx_hash, block_number, block_time) 
 		VALUES ($1, $2, $3, $4, $5, $6)`,
-		donation.CampaignId, donation.Donor, donation.AmountWei, donation.TxHash, donation.CreatedBlock, time.Now())
+		donation.CampaignId, donation.Donor, donation.AmountWei, donation.TxHash, donation.BlockNumber, donation.BlockTime)
+
+	if err != nil {
+		return err
+	}
+
+	log.Println("Row inserted successfully.")
+	return nil
+}
+
+func SaveRefundIssued(refund models.RefundDbEntity) error {
+	pool, err := connect()
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
+	ctx := context.Background()
+
+	_, err = pool.Exec(ctx,
+		`INSERT INTO refunds (campaign_id, donor, total_contributed, tx_hash, block_number, block_time) 
+		VALUES ($1, $2, $3, $4, $5, $6)`,
+		refund.CampaignId, refund.Donor, refund.TotalContributed, refund.TxHash, refund.BlockNumber, refund.BlockTime)
+
+	if err != nil {
+		return err
+	}
+
+	log.Println("Row inserted successfully.")
+	return nil
+}
+
+func SaveWithdrawCompletion(withdraw models.WithdrawDbEntity) error {
+	pool, err := connect()
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
+	ctx := context.Background()
+
+	_, err = pool.Exec(ctx,
+		`INSERT INTO withdrawals (campaign_id, owner, amount_wei, tx_hash, block_number, block_time) 
+		VALUES ($1, $2, $3, $4, $5, $6)`,
+		withdraw.CampaignId, withdraw.Owner, withdraw.AmountWei, withdraw.TxHash, withdraw.BlockNumber, withdraw.BlockTime)
 
 	if err != nil {
 		return err

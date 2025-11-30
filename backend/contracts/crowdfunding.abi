@@ -301,37 +301,6 @@
   },
   {
     "type": "event",
-    "name": "CampaignWithdrawn",
-    "inputs": [
-      {
-        "name": "campaignId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "owner",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "amountWei",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "timestamp",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "DonationReceived",
     "inputs": [
       {
@@ -357,7 +326,7 @@
   },
   {
     "type": "event",
-    "name": "RefundIssued",
+    "name": "DonationRefunded",
     "inputs": [
       {
         "name": "campaignId",
@@ -372,7 +341,32 @@
         "internalType": "address"
       },
       {
-        "name": "totalContribution",
+        "name": "totalContributed",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "FundsWithdrawn",
+    "inputs": [
+      {
+        "name": "campaignId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amountWei",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
