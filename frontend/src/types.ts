@@ -10,6 +10,7 @@ export interface Campaign {
   Image: string;
   Donators: string[];
   Donations: number[];
+  Withdrawn: boolean; 
 }
 
 export interface UnsignedTransaction {
