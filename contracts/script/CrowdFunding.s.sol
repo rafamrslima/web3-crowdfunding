@@ -11,8 +11,9 @@ contract CrowdFundingScript is Script {
 
     function run() public {
         vm.startBroadcast();
+        address usdc = vm.envAddress("USDC_ADDRESS");
 
-        crowdFunding = new CrowdFunding();
+        crowdFunding = new CrowdFunding(usdc);
 
         vm.stopBroadcast();
     }

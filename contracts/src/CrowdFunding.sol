@@ -1,7 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 contract CrowdFunding {
+
+    IERC20 public usdc;
+
+    constructor(address _usdc) {
+      require(_usdc != address(0), "invalid USDC");
+      usdc = IERC20(_usdc);
+    }
+
     struct Campaign {
         address owner;
         string title;
@@ -66,12 +76,15 @@ contract CrowdFunding {
         return id;
     }
 
-    function donateToCampaign(uint256 _id) public payable {
+    function donateToCampaign(uint256 _id, uint256 amount) external {
         require(_id < numberOfCampaigns, "Campaign does not exist");
         Campaign storage campaign = campaigns[_id];
         require(block.timestamp < campaign.deadline, "Campaign has ended");
+        require(amount > 0, "Invalid amount");
 
-        uint256 amount = msg.value;
+        bool ok = usdc.transferFrom(msg.sender, address(this), amount);
+        require(ok, "USDC transfer failed");
+
         campaign.donations.push(amount);
         campaign.donators.push(msg.sender);
         campaign.amountCollected += amount;
@@ -89,8 +102,8 @@ contract CrowdFunding {
         require(!campaign.withdrawn, "Withdraw already done.");
 
         campaign.withdrawn = true;
-        (bool sent,) = payable(campaign.owner).call{value: campaign.amountCollected}("");
-        require(sent, "Transfer failed.");
+        bool ok = usdc.transfer(campaign.owner, campaign.amountCollected);
+        require(ok, "Transfer failed.");
         
         emit FundsWithdrawn(_idCampaign, campaign.owner, campaign.amountCollected);
     }
@@ -106,8 +119,8 @@ contract CrowdFunding {
 
         contributions[_idCampaign][msg.sender] = 0;
 
-        (bool success, ) = payable(msg.sender).call{value: totalContributed}("");
-        require(success, "Refund failed");
+        bool ok = usdc.transfer(msg.sender, totalContributed);
+        require(ok, "Refund failed");
         emit DonationRefunded(_idCampaign, msg.sender, totalContributed);
     }
 

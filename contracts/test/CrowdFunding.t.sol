@@ -10,7 +10,8 @@ contract CrowdFundingTest is Test {
 
     function test_CreateCampaign() public {
         campaignOwner = makeAddr("campaignOwner");
-        crowdFunding = new CrowdFunding();
+        address usdc = vm.envAddress("USDC_ADDRESS");
+        crowdFunding = new CrowdFunding(usdc);
         uint256 campaignId = crowdFunding.createCampaign(
             campaignOwner,
             "Test Campaign",

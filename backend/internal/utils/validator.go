@@ -28,12 +28,12 @@ func ValidateCampaign(campaign dtos.CampaignDto) error {
 		return errors.New("description cannot exceed 1000 characters")
 	}
 
-	donationInWei, err := ParseEthToWei(campaign.Target)
+	donationValue, err := ParseUSDC(campaign.Target)
 	if err != nil {
 		return err
 	}
 
-	if donationInWei.Cmp(big.NewInt(0)) <= 0 {
+	if donationValue.Cmp(big.NewInt(0)) <= 0 {
 		return errors.New("target must be greater than 0")
 	}
 
@@ -57,12 +57,12 @@ func ValidateDonation(donation dtos.DonationDTO) error {
 		return errors.New("campaign ID must be non-negative")
 	}
 
-	donationInWei, err := ParseEthToWei(donation.Value)
+	donationValue, err := ParseUSDC(donation.Value)
 	if err != nil {
 		return err
 	}
 
-	if donationInWei.Cmp(big.NewInt(0)) <= 0 {
+	if donationValue.Cmp(big.NewInt(0)) <= 0 {
 		return errors.New("donation value must be greater than 0")
 	}
 	return nil
