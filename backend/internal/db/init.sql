@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS campaigns (
   campaign_id    BIGINT PRIMARY KEY,
   owner          BYTEA NOT NULL,
-  target_wei     NUMERIC(78,0) NOT NULL,
+  target_amount  NUMERIC(78,0) NOT NULL,
   deadline_ts    BIGINT NOT NULL,
   tx_hash        BYTEA NOT NULL,
   block_number   BIGINT NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS donations (
   id             BIGSERIAL PRIMARY KEY,
   campaign_id    BIGINT,
   donor          BYTEA NOT NULL,
-  amount_wei     NUMERIC(78,0) NOT NULL,
+  amount         NUMERIC(78,0) NOT NULL,
   tx_hash        BYTEA NOT NULL,
   block_number   BIGINT NOT NULL,
   block_time     TIMESTAMPTZ,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS refunds (
 CREATE TABLE IF NOT EXISTS withdrawals (
   campaign_id    BIGINT,
   owner          BYTEA NOT NULL,
-  amount_wei     NUMERIC(78,0) NOT NULL,
+  amount         NUMERIC(78,0) NOT NULL,
   tx_hash        BYTEA NOT NULL,
   block_number   BIGINT NOT NULL,
   block_time     TIMESTAMPTZ,

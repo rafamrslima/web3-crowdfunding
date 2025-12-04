@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { formatEther, createWalletClient, custom } from 'viem';
+import { createWalletClient, custom } from 'viem';
 import type { Hex } from 'viem';
 import { API_BASE, CHAIN_ID } from './config';
 import type { Campaign, UnsignedTransaction } from './types';
@@ -52,13 +52,11 @@ export default function CampaignsPage() {
     }
   };
 
-  const formatWeiToEth = (weiAmount: number): string => {
+  const formatToUsdc = (usdcAmount: number): string => {
     try {
-      // Convert wei (number) to ETH string for display
-      const ethValue = formatEther(BigInt(weiAmount.toString()));
-      // Format to remove unnecessary trailing zeros
-      const formatted = parseFloat(ethValue).toString();
-      return formatted === '0' ? '0' : formatted;
+      // Just format it nicely for display
+      const formatted = parseFloat(usdcAmount.toString()).toFixed(2);
+      return formatted === '0.00' ? '0' : formatted.replace(/\.?0+$/, '');
     } catch {
       return '0';
     }
@@ -96,7 +94,7 @@ export default function CampaignsPage() {
             params: [{
               chainId: "0x" + CHAIN_ID.toString(16),
               chainName: "Anvil Local",
-              nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+              nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, // Native currency for gas fees
               rpcUrls: ["http://127.0.0.1:8545"],
             }],
           });
@@ -143,7 +141,7 @@ export default function CampaignsPage() {
 
     const donationAmount = donationAmounts[campaignIndex];
     if (!donationAmount || donationAmount.trim() === '' || parseFloat(donationAmount) <= 0 || isNaN(parseFloat(donationAmount))) {
-      setDonationError(prev => ({ ...prev, [campaignIndex]: "Please enter a valid ETH amount (e.g., 1 or 1.4)" }));
+      setDonationError(prev => ({ ...prev, [campaignIndex]: "Please enter a valid USDC amount (e.g., 10.5 or 50)" }));
       return;
     }
 
@@ -152,10 +150,10 @@ export default function CampaignsPage() {
     setDonationSuccess(prev => ({ ...prev, [campaignIndex]: null }));
 
     try {
-      // Send ETH amount as string directly (e.g., "1" or "1.4")
+      // Send USDC amount as string directly (e.g., "10.5" or "50")
       const payload = {
         campaignId: campaignIndex,
-        value: donationAmount // Send ETH as string
+        value: donationAmount // Send USDC as string
       };
 
       console.log("Creating unsigned donation transaction...", payload);
@@ -212,7 +210,7 @@ export default function CampaignsPage() {
       if (error.message?.includes("User rejected") || error.message?.includes("rejected")) {
         errorMessage = "Transaction was rejected by user";
       } else if (error.message?.includes("insufficient funds")) {
-        errorMessage = "Insufficient ETH balance for donation";
+        errorMessage = "Insufficient ETH balance for transaction fees or USDC balance for donation";
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -292,12 +290,12 @@ export default function CampaignsPage() {
                 <div className="campaign-stats">
                   <div className="stat-item">
                     <span className="stat-label">Target:</span>
-                    <span className="stat-value">{formatWeiToEth(campaign.Target)} ETH</span>
+                    <span className="stat-value">${formatToUsdc(campaign.Target)} USDC</span>
                   </div>
                   
                   <div className="stat-item">
                     <span className="stat-label">Collected:</span>
-                    <span className="stat-value">{formatWeiToEth(campaign.AmountCollected)} ETH</span>
+                    <span className="stat-value">${formatToUsdc(campaign.AmountCollected)} USDC</span>
                   </div>
                   
                   <div className="stat-item">
@@ -340,10 +338,10 @@ export default function CampaignsPage() {
                 <div className="donation-form">
                   <h4>💰 Donate to this Campaign</h4>
                   <div className="form-group">
-                    <label className="form-label">Donation Amount (ETH)</label>
+                    <label className="form-label">Donation Amount (USDC)</label>
                     <input
                       type="text"
-                      placeholder="Enter ETH amount (e.g., 1 or 1.4)"
+                      placeholder="Enter USDC amount (e.g., 10.5 or 50)"
                       value={donationAmounts[index] || ""}
                       onChange={(e) => {
                         // Only allow numbers, dots, and basic validation

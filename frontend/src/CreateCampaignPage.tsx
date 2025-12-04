@@ -22,8 +22,8 @@ export default function CreateCampaignPage() {
   const [owner, setOwner] = useState("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
   const [title, setTitle] = useState("Save the Amazon river");
   const [description, setDescription] = useState("Funding reforestation projects worldwide.");
-  // Target amount in ETH as string
-  const [targetEth, setTargetEth] = useState("1"); // 1 ETH (backend will convert to wei)
+  // Target amount in USDC as string
+  const [targetUsdc, setTargetUsdc] = useState("10.5"); // 10.5 USDC (backend will handle)
   // Default deadline from the given Unix ts (1794268800) ≈ 2026-...; show as date input
   const defaultDeadlineISO = new Date(1794268800 * 1000).toISOString().slice(0, 10);
   const [deadlineDate, setDeadlineDate] = useState(defaultDeadlineISO);
@@ -62,7 +62,7 @@ export default function CreateCampaignPage() {
           params: [{
             chainId: "0x" + CHAIN_ID.toString(16),
             chainName: "Anvil Local",
-            nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+            nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, // Native currency still ETH, but we use USDC for campaigns
             rpcUrls: ["http://127.0.0.1:8545"],
           }],
         });
@@ -101,16 +101,16 @@ export default function CreateCampaignPage() {
         throw new Error("Deadline must be in the future");
       }
 
-      // Validate ETH amount format
-      if (!targetEth || targetEth.trim() === '' || parseFloat(targetEth) <= 0 || isNaN(parseFloat(targetEth))) {
-        throw new Error("Please enter a valid ETH target amount (e.g., 1 or 1.2)");
+      // Validate USDC amount format
+      if (!targetUsdc || targetUsdc.trim() === '' || parseFloat(targetUsdc) <= 0 || isNaN(parseFloat(targetUsdc))) {
+        throw new Error("Please enter a valid USDC target amount (e.g., 10.5 or 1500)");
       }
 
       const payload = {
         owner: owner,
         title: title,
         description: description,
-        target: targetEth,                  // ETH (string) - backend will convert to wei
+        target: targetUsdc,                 // USDC (string) - e.g. "10.5" = $10.50, "1500" = $1500
         deadline: deadlineSec.toString(),   // unix seconds (string)
         image: image || ""                  // keep as empty string if not provided
       };
@@ -152,7 +152,7 @@ export default function CreateCampaignPage() {
       if (error.message?.includes("User rejected") || error.message?.includes("rejected")) {
         setErrorMessage("Transaction was rejected by user");
       } else if (error.message?.includes("insufficient funds")) {
-        setErrorMessage("Insufficient ETH balance for transaction");
+        setErrorMessage("Insufficient ETH balance for transaction fees");
       } else {
         setErrorMessage(error.message || "Failed to create campaign");
       }
@@ -237,20 +237,20 @@ export default function CreateCampaignPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Target (in ETH)</label>
+            <label className="form-label">Target (in USDC)</label>
             <input
               required
               type="text"
-              value={targetEth}
+              value={targetUsdc}
               onChange={(e) => {
                 // Only allow numbers, dots, and basic validation
                 const value = e.target.value;
                 if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                  setTargetEth(value);
+                  setTargetUsdc(value);
                   clearMessages();
                 }
               }}
-              placeholder="Enter ETH amount (e.g., 1 or 1.2)"
+              placeholder="Enter USDC amount (e.g., 10.5 or 1500)"
               className="form-input"
             />
           </div>
