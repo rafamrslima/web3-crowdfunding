@@ -4,6 +4,7 @@ import { createWalletClient, custom } from 'viem';
 import type { Hex } from 'viem';
 import { API_BASE, CHAIN_ID } from './config';
 import type { Campaign, UnsignedTransaction } from './types';
+import { approveUSDC, getUSDCBalance, needsApproval } from './utils/usdcApproval';
 import './App.css';
 
 declare global { interface Window { ethereum?: any } }
@@ -15,15 +16,20 @@ export default function CampaignsPage() {
 
   // Donation states
   const [account, setAccount] = useState<`0x${string}` | null>(null);
+  const [usdcBalance, setUsdcBalance] = useState<string>('0');
   const [expandedDonation, setExpandedDonation] = useState<number | null>(null);
   const [donationAmounts, setDonationAmounts] = useState<Record<number, string>>({});
   const [donationLoading, setDonationLoading] = useState<Record<number, boolean>>({});
+  const [approvalLoading, setApprovalLoading] = useState<Record<number, boolean>>({});
   const [donationSuccess, setDonationSuccess] = useState<Record<number, string | null>>({});
   const [donationError, setDonationError] = useState<Record<number, string | null>>({});
 
   // MetaMask wallet client
   const walletClient = window.ethereum
-    ? createWalletClient({ chain: { id: CHAIN_ID } as any, transport: custom(window.ethereum) })
+    ? createWalletClient({ 
+        chain: { id: CHAIN_ID, name: 'Anvil', nativeCurrency: { decimals: 18, name: 'ETH', symbol: 'ETH' }, rpcUrls: { default: { http: ['http://127.0.0.1:8545'] } } }, 
+        transport: custom(window.ethereum) 
+      })
     : null;
 
   useEffect(() => {
@@ -105,9 +111,25 @@ export default function CampaignsPage() {
 
       const [addr] = await walletClient.getAddresses();
       setAccount(addr);
+      
+      // Load USDC balance
+      await loadUSDCBalance(addr);
     } catch (err) {
       console.error("Failed to connect wallet:", err);
       alert("Failed to connect wallet. Please try again.");
+    }
+  };
+
+  // Load user's USDC balance
+  const loadUSDCBalance = async (address: string) => {
+    if (!walletClient) return;
+    
+    try {
+      const balance = await getUSDCBalance(walletClient, address);
+      setUsdcBalance(balance);
+    } catch (err) {
+      console.error("Failed to load USDC balance:", err);
+      setUsdcBalance('0');
     }
   };
 
@@ -134,7 +156,7 @@ export default function CampaignsPage() {
     setDonationAmounts(prev => ({ ...prev, [campaignIndex]: amount }));
   };
 
-  // Send donation transaction
+  // Send donation transaction with USDC approval
   const sendDonation = async (campaignIndex: number) => {
     if (!walletClient || !account) {
       alert("Please connect your wallet first");
@@ -147,11 +169,38 @@ export default function CampaignsPage() {
       return;
     }
 
+    // Check USDC balance
+    const balance = parseFloat(usdcBalance);
+    const amount = parseFloat(donationAmount);
+    if (amount > balance) {
+      setDonationError(prev => ({ ...prev, [campaignIndex]: `Insufficient USDC balance. You have $${balance} USDC` }));
+      return;
+    }
+
     setDonationLoading(prev => ({ ...prev, [campaignIndex]: true }));
     setDonationError(prev => ({ ...prev, [campaignIndex]: null }));
     setDonationSuccess(prev => ({ ...prev, [campaignIndex]: null }));
 
     try {
+      // Step 1: Check if approval is needed and approve USDC spending
+      const approvalNeeded = await needsApproval(walletClient, account, donationAmount);
+      
+      if (approvalNeeded) {
+        console.log("Step 1: USDC approval needed, requesting approval...");
+        setApprovalLoading(prev => ({ ...prev, [campaignIndex]: true }));
+        
+        const approvalTxHash = await approveUSDC(walletClient, account, donationAmount);
+        console.log("✅ USDC approval transaction sent:", approvalTxHash);
+        
+        setApprovalLoading(prev => ({ ...prev, [campaignIndex]: false }));
+        
+        // Wait a moment for approval transaction to be processed
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else {
+        console.log("USDC approval not needed, proceeding with donation...");
+      }
+
+      // Step 2: Send donation transaction
       // Send USDC amount as string directly (e.g., "10.5" or "50")
       const payload = {
         campaignId: campaignIndex,
@@ -199,9 +248,10 @@ export default function CampaignsPage() {
       setDonationAmounts(prev => ({ ...prev, [campaignIndex]: "" }));
       setExpandedDonation(null);
       
-      // Refresh campaigns data to show updated amounts
+      // Refresh campaigns data and balance to show updated amounts
       setTimeout(() => {
         fetchCampaigns();
+        if (account) loadUSDCBalance(account);
       }, 2000); // Wait 2 seconds for blockchain confirmation
 
     } catch (err) {
@@ -213,6 +263,8 @@ export default function CampaignsPage() {
         errorMessage = "Transaction was rejected by user";
       } else if (error.message?.includes("insufficient funds")) {
         errorMessage = "Insufficient ETH balance for transaction fees or USDC balance for donation";
+      } else if (error.message?.includes("approve") || error.message?.includes("approval")) {
+        errorMessage = "USDC approval failed. Please try again.";
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -220,6 +272,7 @@ export default function CampaignsPage() {
       setDonationError(prev => ({ ...prev, [campaignIndex]: errorMessage }));
     } finally {
       setDonationLoading(prev => ({ ...prev, [campaignIndex]: false }));
+      setApprovalLoading(prev => ({ ...prev, [campaignIndex]: false }));
     }
   };
 
@@ -328,9 +381,9 @@ export default function CampaignsPage() {
                 <button 
                   className="btn btn-primary"
                   onClick={() => toggleDonationForm(index)}
-                  disabled={donationLoading[index]}
+                  disabled={donationLoading[index] || approvalLoading[index]}
                 >
-                  {donationLoading[index] && <span className="loading-spinner"></span>}
+                  {(donationLoading[index] || approvalLoading[index]) && <span className="loading-spinner"></span>}
                   {expandedDonation === index ? "❌ Cancel" : "💝 Donate"}
                 </button>
               </div>
@@ -339,6 +392,22 @@ export default function CampaignsPage() {
               {expandedDonation === index && (
                 <div className="donation-form">
                   <h4>💰 Donate to this Campaign</h4>
+                  
+                  {/* USDC Balance Display */}
+                  {account && (
+                    <div className="balance-info" style={{ 
+                      backgroundColor: 'var(--light-gray)', 
+                      padding: '1rem', 
+                      borderRadius: 'var(--border-radius)', 
+                      marginBottom: '1rem' 
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span><strong>Your USDC Balance:</strong></span>
+                        <span style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>${usdcBalance} USDC</span>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="form-group">
                     <label className="form-label">Donation Amount (USDC)</label>
                     <input
@@ -359,13 +428,23 @@ export default function CampaignsPage() {
                   <div className="donation-actions">
                     <button 
                       onClick={() => sendDonation(index)}
-                      disabled={donationLoading[index] || !donationAmounts[index]}
-                      className={`btn ${donationLoading[index] ? 'btn-secondary' : 'btn-success'}`}
+                      disabled={donationLoading[index] || approvalLoading[index] || !donationAmounts[index]}
+                      className={`btn ${donationLoading[index] || approvalLoading[index] ? 'btn-secondary' : 'btn-success'}`}
                     >
-                      {donationLoading[index] && <span className="loading-spinner"></span>}
-                      {donationLoading[index] ? 'Processing...' : '🚀 Send Donation'}
+                      {(donationLoading[index] || approvalLoading[index]) && <span className="loading-spinner"></span>}
+                      {approvalLoading[index] ? '📝 Approving USDC...' : donationLoading[index] ? '💸 Processing Donation...' : '🚀 Send Donation'}
                     </button>
                   </div>
+
+                  {/* Approval Info */}
+                  {approvalLoading[index] && (
+                    <div className="message-box" style={{ backgroundColor: '#e3f2fd', border: '1px solid #2196f3', marginTop: '1rem' }}>
+                      <h4 style={{ color: '#1976d2', margin: '0 0 0.5rem 0' }}>🔐 USDC Approval Required</h4>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+                        Please approve the USDC spending in MetaMask. This allows the crowdfunding contract to use your USDC tokens.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Success Message */}
                   {donationSuccess[index] && (

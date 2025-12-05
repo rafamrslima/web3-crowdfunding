@@ -226,14 +226,15 @@ func FetchCampaignById(campaignId int) (crowdfunding.CrowdFundingCampaign, error
 	return campaigns[campaignId], nil
 }
 
-func BuildDonationTransaction(campaignId int) (dtos.UnsignedTxResponse, error) {
+func BuildDonationTransaction(campaignId int, value string) (dtos.UnsignedTxResponse, error) {
 	parsedABI, err := parseContractABI()
 	if err != nil {
 		return dtos.UnsignedTxResponse{}, err
 	}
 
 	campaignIdBigInt := big.NewInt(int64(campaignId))
-	data, err := parsedABI.Pack("donateToCampaign", campaignIdBigInt)
+	valueParsed, _ := utils.ParseUSDC(value)
+	data, err := parsedABI.Pack("donateToCampaign", campaignIdBigInt, valueParsed)
 	if err != nil {
 		log.Printf("Error packing function data: %v", err)
 		return dtos.UnsignedTxResponse{}, err
@@ -244,36 +245,13 @@ func BuildDonationTransaction(campaignId int) (dtos.UnsignedTxResponse, error) {
 		return dtos.UnsignedTxResponse{}, err
 	}
 
-	ethClient, err := connectToEthereumNode()
-	if err != nil {
-		return dtos.UnsignedTxResponse{}, err
-	}
-
 	contractAddr := common.HexToAddress(contractAddress)
-	defer ethClient.Close()
-
-	if err != nil {
-		log.Printf("Error: %v", err)
-		return dtos.UnsignedTxResponse{}, err
-	}
-
-	callMsg := geth.CallMsg{
-		To:    &contractAddr,
-		Data:  data,
-		Value: big.NewInt(0),
-	}
-
-	gas, err := ethClient.EstimateGas(context.Background(), callMsg)
-	if err != nil {
-		log.Printf("Error estimating gas: %v", err)
-		return dtos.UnsignedTxResponse{}, err
-	}
 
 	unsigned := dtos.UnsignedTxResponse{
 		To:    contractAddr.Hex(),
 		Data:  fmt.Sprintf("0x%x", data),
 		Value: "0x0",
-		Gas:   fmt.Sprintf("0x%x", gas),
+		Gas:   fmt.Sprintf("0x%x", 250000), // estimated gas
 	}
 
 	return unsigned, nil

@@ -169,7 +169,7 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		return
 	}
 
-	fmt.Printf("CampaignCreated id=%s owner=%s title=%s targetWei=%s txHash=%s deadline=%d block=%d\n",
+	fmt.Printf("CampaignCreated id=%s owner=%s title=%s target=%s txHash=%s deadline=%d block=%d\n",
 		id.String(),
 		owner.Hex(),
 		out.Title,
@@ -208,7 +208,7 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 		return
 	}
 
-	fmt.Printf("DonationReceived campaignId=%s donor=%s amountWei=%s txHash=%s block=%d\n",
+	fmt.Printf("DonationReceived campaignId=%s donor=%s amount=%s txHash=%s block=%d\n",
 		campaignId.String(),
 		donor.Hex(),
 		out.Amount.String(),
@@ -245,7 +245,7 @@ func saveWithdrawCompletion(parsedABI abi.ABI, lg types.Log) {
 		return
 	}
 
-	fmt.Printf("FundsWithdrawn campaignId=%s owner=%s amountWei=%s txHash=%s block=%d\n",
+	fmt.Printf("FundsWithdrawn campaignId=%s owner=%s amount=%s txHash=%s block=%d\n",
 		campaignId.String(),
 		owner.Hex(),
 		out.Amount.String(),
@@ -282,7 +282,7 @@ func saveDonationRefund(parsedABI abi.ABI, lg types.Log) {
 		return
 	}
 
-	fmt.Printf("Refund Issued campaignId=%s donor=%s totalContributedWei=%s txHash=%s block=%d\n",
+	fmt.Printf("Refund Issued campaignId=%s donor=%s totalContributed=%s txHash=%s block=%d\n",
 		campaignId.String(),
 		donor.Hex(),
 		out.TotalContributed.String(),
