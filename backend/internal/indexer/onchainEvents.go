@@ -143,9 +143,9 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 	owner := common.BytesToAddress(lg.Topics[2].Bytes())
 
 	var out struct {
-		Title     string
-		TargetWei *big.Int
-		Deadline  *big.Int
+		Title    string
+		Target   *big.Int
+		Deadline *big.Int
 	}
 
 	if err := parsedABI.UnpackIntoInterface(&out, campaignCreationEvent, lg.Data); err != nil {
@@ -156,7 +156,7 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		Id:          id.Int64(),
 		Owner:       owner.Hex(),
 		Title:       out.Title,
-		Target:      out.TargetWei.Int64(),
+		Target:      out.Target.Int64(),
 		Deadline:    uint64(out.Deadline.Int64()),
 		TxHash:      lg.TxHash.Hex(),
 		BlockNumber: lg.BlockNumber,
@@ -173,7 +173,7 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		id.String(),
 		owner.Hex(),
 		out.Title,
-		out.TargetWei.String(),
+		out.Target.String(),
 		lg.TxHash,
 		out.Deadline.Uint64(),
 		lg.BlockNumber,
@@ -185,7 +185,7 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 	donor := common.BytesToAddress(lg.Topics[2].Bytes())
 
 	var out struct {
-		AmountWei *big.Int
+		Amount *big.Int
 	}
 
 	if err := parsedABI.UnpackIntoInterface(&out, donationReceivedEvent, lg.Data); err != nil {
@@ -196,7 +196,7 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 	donationDbObj := models.DonationDbEntity{
 		CampaignId:  campaignId.Int64(),
 		Donor:       donor.Hex(),
-		AmountWei:   out.AmountWei.Int64(),
+		Amount:      out.Amount.Int64(),
 		TxHash:      lg.TxHash.Hex(),
 		BlockNumber: lg.BlockNumber,
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
@@ -211,7 +211,7 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 	fmt.Printf("DonationReceived campaignId=%s donor=%s amountWei=%s txHash=%s block=%d\n",
 		campaignId.String(),
 		donor.Hex(),
-		out.AmountWei.String(),
+		out.Amount.String(),
 		lg.TxHash,
 		lg.BlockNumber,
 	)
@@ -222,7 +222,7 @@ func saveWithdrawCompletion(parsedABI abi.ABI, lg types.Log) {
 	owner := common.BytesToAddress(lg.Topics[2].Bytes())
 
 	var out struct {
-		AmountWei *big.Int
+		Amount *big.Int
 	}
 
 	if err := parsedABI.UnpackIntoInterface(&out, fundsWithdrawnEvent, lg.Data); err != nil {
@@ -233,7 +233,7 @@ func saveWithdrawCompletion(parsedABI abi.ABI, lg types.Log) {
 	withdrawDbObj := models.WithdrawDbEntity{
 		CampaignId:  campaignId.Int64(),
 		Owner:       owner.Hex(),
-		AmountWei:   out.AmountWei.Int64(),
+		Amount:      out.Amount.Int64(),
 		TxHash:      lg.TxHash.Hex(),
 		BlockNumber: lg.BlockNumber,
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
@@ -248,7 +248,7 @@ func saveWithdrawCompletion(parsedABI abi.ABI, lg types.Log) {
 	fmt.Printf("FundsWithdrawn campaignId=%s owner=%s amountWei=%s txHash=%s block=%d\n",
 		campaignId.String(),
 		owner.Hex(),
-		out.AmountWei.String(),
+		out.Amount.String(),
 		lg.TxHash,
 		lg.BlockNumber,
 	)
@@ -259,7 +259,7 @@ func saveDonationRefund(parsedABI abi.ABI, lg types.Log) {
 	donor := common.BytesToAddress(lg.Topics[2].Bytes())
 
 	var out struct {
-		TotalContributedWei *big.Int
+		TotalContributed *big.Int
 	}
 
 	if err := parsedABI.UnpackIntoInterface(&out, donationRefundedEvent, lg.Data); err != nil {
@@ -270,7 +270,7 @@ func saveDonationRefund(parsedABI abi.ABI, lg types.Log) {
 	refundDbObj := models.RefundDbEntity{
 		CampaignId:       campaignId.Int64(),
 		Donor:            donor.Hex(),
-		TotalContributed: out.TotalContributedWei.Int64(),
+		TotalContributed: out.TotalContributed.Int64(),
 		TxHash:           lg.TxHash.Hex(),
 		BlockNumber:      lg.BlockNumber,
 		BlockTime:        time.Unix(int64(lg.BlockTimestamp), 0),
@@ -285,7 +285,7 @@ func saveDonationRefund(parsedABI abi.ABI, lg types.Log) {
 	fmt.Printf("Refund Issued campaignId=%s donor=%s totalContributedWei=%s txHash=%s block=%d\n",
 		campaignId.String(),
 		donor.Hex(),
-		out.TotalContributedWei.String(),
+		out.TotalContributed.String(),
 		lg.TxHash,
 		lg.BlockNumber,
 	)

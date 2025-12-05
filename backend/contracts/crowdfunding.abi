@@ -314,7 +314,7 @@
         "internalType": "string"
       },
       {
-        "name": "targetWei",
+        "name": "target",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -345,7 +345,7 @@
         "internalType": "address"
       },
       {
-        "name": "amountWei",
+        "name": "amount",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -395,7 +395,7 @@
         "internalType": "address"
       },
       {
-        "name": "amountWei",
+        "name": "amount",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"

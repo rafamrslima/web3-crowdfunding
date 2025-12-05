@@ -38,7 +38,7 @@ func SaveCampaignCreated(campaign models.CampaignDbEntity) error {
 	ctx := context.Background()
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO campaigns (campaign_id, owner, target_wei, deadline_ts, tx_hash, block_number, block_time) 
+		`INSERT INTO campaigns (campaign_id, owner, target_amount, deadline_ts, tx_hash, block_number, block_time) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 		campaign.Id, campaign.Owner, campaign.Target, campaign.Deadline, campaign.TxHash, campaign.BlockNumber, campaign.BlockTime)
 
@@ -60,9 +60,9 @@ func SaveDonationReceived(donation models.DonationDbEntity) error {
 	ctx := context.Background()
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO donations (campaign_id, donor, amount_wei, tx_hash, block_number, block_time) 
+		`INSERT INTO donations (campaign_id, donor, amount, tx_hash, block_number, block_time) 
 		VALUES ($1, $2, $3, $4, $5, $6)`,
-		donation.CampaignId, donation.Donor, donation.AmountWei, donation.TxHash, donation.BlockNumber, donation.BlockTime)
+		donation.CampaignId, donation.Donor, donation.Amount, donation.TxHash, donation.BlockNumber, donation.BlockTime)
 
 	if err != nil {
 		return err
@@ -104,9 +104,9 @@ func SaveWithdrawCompletion(withdraw models.WithdrawDbEntity) error {
 	ctx := context.Background()
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO withdrawals (campaign_id, owner, amount_wei, tx_hash, block_number, block_time) 
+		`INSERT INTO withdrawals (campaign_id, owner, amount, tx_hash, block_number, block_time) 
 		VALUES ($1, $2, $3, $4, $5, $6)`,
-		withdraw.CampaignId, withdraw.Owner, withdraw.AmountWei, withdraw.TxHash, withdraw.BlockNumber, withdraw.BlockTime)
+		withdraw.CampaignId, withdraw.Owner, withdraw.Amount, withdraw.TxHash, withdraw.BlockNumber, withdraw.BlockTime)
 
 	if err != nil {
 		return err

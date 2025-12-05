@@ -29,20 +29,20 @@ contract CrowdFunding {
         uint256 indexed id,
         address indexed owner,
         string title,
-        uint256 targetWei,
+        uint256 target,
         uint256 deadline
     );
 
     event DonationReceived(
         uint256 indexed campaignId,
         address indexed donor,
-        uint256 amountWei
+        uint256 amount
     );
 
     event FundsWithdrawn(
         uint256 indexed campaignId,
         address indexed owner,
-        uint256 amountWei
+        uint256 amount
     );
 
     event DonationRefunded(

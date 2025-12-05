@@ -54,8 +54,10 @@ export default function CampaignsPage() {
 
   const formatToUsdc = (usdcAmount: number): string => {
     try {
-      // Just format it nicely for display
-      const formatted = parseFloat(usdcAmount.toString()).toFixed(2);
+      // USDC format: last 6 digits are cents (micro-units)
+      // Example: 103000000 = $103.00
+      const dollars = usdcAmount / 1000000; // Divide by 1,000,000 to convert from micro-units
+      const formatted = dollars.toFixed(2);
       return formatted === '0.00' ? '0' : formatted.replace(/\.?0+$/, '');
     } catch {
       return '0';
