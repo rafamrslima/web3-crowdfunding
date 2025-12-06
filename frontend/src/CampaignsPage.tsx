@@ -1,21 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { createWalletClient, custom } from 'viem';
 import type { Hex } from 'viem';
-import { API_BASE, CHAIN_ID } from './config';
+import { API_BASE } from './config';
 import type { Campaign, UnsignedTransaction } from './types';
 import { approveUSDC, getUSDCBalance, needsApproval } from './utils/usdcApproval';
+import { useWallet } from './WalletContext';
 import './App.css';
 
-declare global { interface Window { ethereum?: any } }
-
 export default function CampaignsPage() {
+  const { account, walletClient } = useWallet();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Donation states
-  const [account, setAccount] = useState<`0x${string}` | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<string>('0');
   const [expandedDonation, setExpandedDonation] = useState<number | null>(null);
   const [donationAmounts, setDonationAmounts] = useState<Record<number, string>>({});
@@ -23,14 +21,6 @@ export default function CampaignsPage() {
   const [approvalLoading, setApprovalLoading] = useState<Record<number, boolean>>({});
   const [donationSuccess, setDonationSuccess] = useState<Record<number, string | null>>({});
   const [donationError, setDonationError] = useState<Record<number, string | null>>({});
-
-  // MetaMask wallet client
-  const walletClient = window.ethereum
-    ? createWalletClient({ 
-        chain: { id: CHAIN_ID, name: 'Anvil', nativeCurrency: { decimals: 18, name: 'ETH', symbol: 'ETH' }, rpcUrls: { default: { http: ['http://127.0.0.1:8545'] } } }, 
-        transport: custom(window.ethereum) 
-      })
-    : null;
 
   useEffect(() => {
     fetchCampaigns();
@@ -79,49 +69,8 @@ export default function CampaignsPage() {
     return Math.min((collected / target) * 100, 100);
   };
 
-  // Connect to MetaMask
-  const connectWallet = async () => {
-    if (!walletClient) {
-      alert("MetaMask not found. Please install MetaMask extension.");
-      return;
-    }
-
-    try {
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-
-      const current = await walletClient.getChainId();
-      if (current !== CHAIN_ID) {
-        try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x" + CHAIN_ID.toString(16) }],
-          });
-        } catch {
-          await window.ethereum.request({
-            method: "wallet_addEthereumChain",
-            params: [{
-              chainId: "0x" + CHAIN_ID.toString(16),
-              chainName: "Anvil Local",
-              nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, // Native currency for gas fees
-              rpcUrls: ["http://127.0.0.1:8545"],
-            }],
-          });
-        }
-      }
-
-      const [addr] = await walletClient.getAddresses();
-      setAccount(addr);
-      
-      // Load USDC balance
-      await loadUSDCBalance(addr);
-    } catch (err) {
-      console.error("Failed to connect wallet:", err);
-      alert("Failed to connect wallet. Please try again.");
-    }
-  };
-
-  // Load user's USDC balance
-  const loadUSDCBalance = async (address: string) => {
+  // Load USDC balance function
+  const loadUSDCBalance = useCallback(async (address: string) => {
     if (!walletClient) return;
     
     try {
@@ -131,7 +80,16 @@ export default function CampaignsPage() {
       console.error("Failed to load USDC balance:", err);
       setUsdcBalance('0');
     }
-  };
+  }, [walletClient]);
+
+  // Load USDC balance when account changes
+  useEffect(() => {
+    if (account && walletClient) {
+      loadUSDCBalance(account);
+    } else {
+      setUsdcBalance('0');
+    }
+  }, [account, walletClient, loadUSDCBalance]);
 
   // Toggle donation form for a specific campaign
   const toggleDonationForm = async (campaignIndex: number) => {
@@ -141,8 +99,8 @@ export default function CampaignsPage() {
     }
 
     if (!account) {
-      await connectWallet();
-      if (!account) return; // If connection failed
+      alert("Please connect your wallet first using the sidebar.");
+      return;
     }
 
     setExpandedDonation(campaignIndex);
@@ -303,11 +261,8 @@ export default function CampaignsPage() {
 
   return (
     <div className="app-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 className="app-title" style={{ margin: 0 }}>🌟 Active Campaigns</h1>
-        <Link to="/create" className="btn btn-success">
-          ➕ Create Campaign
-        </Link>
+      <div className="page-header">
+        <h1 className="page-title">🌟 Active Campaigns</h1>
       </div>
 
       {campaigns.length === 0 ? (
@@ -379,12 +334,13 @@ export default function CampaignsPage() {
 
               <div className="campaign-actions">
                 <button 
-                  className="btn btn-primary"
+                  className={`btn ${!account ? 'btn-secondary' : 'btn-primary'}`}
                   onClick={() => toggleDonationForm(index)}
-                  disabled={donationLoading[index] || approvalLoading[index]}
+                  disabled={!account || donationLoading[index] || approvalLoading[index]}
+                  title={!account ? 'Please connect your wallet to donate' : ''}
                 >
                   {(donationLoading[index] || approvalLoading[index]) && <span className="loading-spinner"></span>}
-                  {expandedDonation === index ? "❌ Cancel" : "💝 Donate"}
+                  {!account ? "🔒 Connect Wallet to Donate" : (expandedDonation === index ? "❌ Cancel" : "💝 Donate")}
                 </button>
               </div>
 
@@ -475,9 +431,7 @@ export default function CampaignsPage() {
       <div style={{ textAlign: 'center', marginTop: '3rem', padding: '2rem', backgroundColor: 'var(--light-gray)', borderRadius: 'var(--border-radius)' }}>
         <h3>Ready to make a difference? 🚀</h3>
         <p>Create your own campaign and let the community support your cause!</p>
-        <Link to="/create" className="btn btn-success">
-          Start Your Campaign
-        </Link>
+        <p className="text-muted">Use the sidebar to create a new campaign!</p>
       </div>
     </div>
   );

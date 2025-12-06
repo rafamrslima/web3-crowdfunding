@@ -1,12 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
-import { createWalletClient, custom } from "viem";
 import type { Hex } from "viem";
-import { Link } from "react-router-dom";
-import { CHAIN_ID, API_BASE } from "./config";
-import "./App.css";
 
-declare global { interface Window { ethereum?: any } }
+import { API_BASE } from "./config";
+import { useWallet } from "./WalletContext";
+import "./App.css";
 
 function toUnixSeconds(dateStr: string): string {
   const ms = new Date(dateStr).getTime();
@@ -14,12 +12,9 @@ function toUnixSeconds(dateStr: string): string {
 }
 
 export default function CreateCampaignPage() {
-  const [account, setAccount] = useState<`0x${string}` | null>(null);
-  const walletClient = window.ethereum
-    ? createWalletClient({ chain: { id: CHAIN_ID } as any, transport: custom(window.ethereum) })
-    : null;
+  const { account, walletClient, connectWallet } = useWallet();
   // Defaults (editable in the UI)
-  const [owner, setOwner] = useState("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
+  const [owner, setOwner] = useState<string>(() => account || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
   const [title, setTitle] = useState("Save the Amazon river");
   const [description, setDescription] = useState("Funding reforestation projects worldwide.");
   // Target amount in USDC as string
@@ -42,44 +37,12 @@ export default function CreateCampaignPage() {
     }
   };
 
-  async function connectWallet() {
-    if (!walletClient) {
-      console.error("MetaMask not found");
-      return;
+  // Update owner when account changes
+  useEffect(() => {
+    if (account && owner === "0x70997970C51812dc3A010C7d01b50e0d17dc79C8") {
+      setOwner(account);
     }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-
-    const current = await walletClient.getChainId();
-    if (current !== CHAIN_ID) {
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x" + CHAIN_ID.toString(16) }],
-        });
-      } catch {
-        await window.ethereum.request({
-          method: "wallet_addEthereumChain",
-          params: [{
-            chainId: "0x" + CHAIN_ID.toString(16),
-            chainName: "Anvil Local",
-            nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, // Native currency still ETH, but we use USDC for campaigns
-            rpcUrls: ["http://127.0.0.1:8545"],
-          }],
-        });
-      }
-    }
-
-    const [addr] = await walletClient.getAddresses();
-    setAccount(addr);
-    setOwner(addr); // preload owner field, but it stays editable
-  }
-
-  function disconnectWallet() {
-    setAccount(null);
-    setOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8"); // Reset to default
-    setSuccessTxHash(null);
-    setErrorMessage(null);
-  }
+  }, [account, owner]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -166,35 +129,23 @@ export default function CreateCampaignPage() {
 
   return (
     <div className="app-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 className="app-title" style={{ margin: 0 }}>🚀 Create Crowdfunding Campaign</h1>
-        <Link to="/" className="btn btn-secondary">
-          ← Back to Campaigns
-        </Link>
+      <div className="page-header">
+        <h1 className="page-title">🚀 Create Crowdfunding Campaign</h1>
       </div>
 
-      <div className="wallet-section">
-        <h3>1. Connect Your Wallet</h3>
-        <div className="wallet-controls">
-          {!account ? (
+      {!account && (
+        <div className="wallet-section">
+          <h3>1. Connect Your Wallet</h3>
+          <div className="wallet-controls">
             <button onClick={connectWallet} className="btn btn-primary">
               🦊 Connect MetaMask
             </button>
-          ) : (
-            <>
-              <button className="btn btn-connected" disabled>
-                ✅ <span className="wallet-address">{account.slice(0, 6)}…{account.slice(-4)}</span>
-              </button>
-              <button onClick={disconnectWallet} className="btn btn-danger">
-                🔌 Disconnect
-              </button>
-            </>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="form-container">
-        <h3>2. Campaign Details</h3>
+        <h3>{account ? '1.' : '2.'} Campaign Details</h3>
         <form onSubmit={onSubmit} className="form">
           <div className="form-group">
             <label className="form-label">Owner (0x address)</label>

@@ -474,8 +474,204 @@ body {
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
+/* Layout with Sidebar */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--light-gray);
+}
+
+.sidebar {
+  width: 250px;
+  background-color: var(--white);
+  border-right: 1px solid var(--border-gray);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-gray);
+  background: linear-gradient(135deg, var(--primary-blue), var(--success-green));
+}
+
+.sidebar-title {
+  color: var(--white);
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sidebar-nav {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.sidebar-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: var(--text-dark);
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+
+.sidebar-link:hover {
+  background-color: var(--light-gray);
+  color: var(--primary-blue);
+  text-decoration: none;
+}
+
+.sidebar-link.active {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border-color: var(--primary-blue-dark);
+}
+
+.sidebar-button {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+  width: 100%;
+}
+
+.sidebar-button-primary {
+  background-color: var(--primary-blue);
+  color: var(--white);
+}
+
+.sidebar-button-primary:hover {
+  background-color: var(--primary-blue-dark);
+}
+
+.sidebar-button-danger {
+  background-color: transparent;
+  color: var(--danger-red);
+  border: 1px solid var(--danger-red);
+  margin-top: auto;
+}
+
+.sidebar-button-danger:hover {
+  background-color: var(--danger-red);
+  color: var(--white);
+}
+
+.sidebar-account {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.account-badge {
+  background-color: var(--success-green);
+  color: var(--white);
+  padding: 0.5rem;
+  border-radius: var(--border-radius);
+  font-size: 0.8rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  min-height: 100vh;
+}
+
+.content-wrapper {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Page specific styles */
+.page-container {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 2rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.page-title {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.account-info {
+  background-color: var(--light-gray);
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.blank-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.blank-content {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.blank-content h3 {
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+.text-muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Update existing app-container for pages without sidebar */
+.app-container {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 2rem;
+  margin: 0;
+  max-width: none;
+}
+
 /* Responsive adjustments for campaigns page */
 @media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+  
+  .main-content {
+    margin-left: 200px;
+  }
+  
   .campaigns-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
@@ -491,5 +687,28 @@ body {
   
   .donation-actions {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 576px) {
+  .sidebar {
+    width: 60px;
+    overflow: hidden;
+  }
+  
+  .sidebar-title,
+  .sidebar-link,
+  .sidebar-button,
+  .account-badge {
+    font-size: 0;
+    text-align: center;
+  }
+  
+  .main-content {
+    margin-left: 60px;
+  }
+  
+  .content-wrapper {
+    padding: 1rem;
   }
 }
