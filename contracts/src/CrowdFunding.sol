@@ -81,6 +81,7 @@ contract CrowdFunding {
         Campaign storage campaign = campaigns[_id];
         require(block.timestamp < campaign.deadline, "Campaign has ended");
         require(amount > 0, "Invalid amount");
+        require(campaign.owner != msg.sender, "Owner can't donate");
 
         bool ok = usdc.transferFrom(msg.sender, address(this), amount);
         require(ok, "USDC transfer failed");

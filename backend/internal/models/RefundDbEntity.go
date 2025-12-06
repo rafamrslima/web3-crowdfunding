@@ -1,12 +1,16 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/ethereum/go-ethereum/common"
+)
 
 type RefundDbEntity struct {
 	CampaignId       int64
-	Donor            string
+	Donor            common.Address
 	TotalContributed int64
-	TxHash           string
+	TxHash           common.Hash
 	BlockNumber      uint64
 	BlockTime        time.Time
 	CreatedAt        time.Time

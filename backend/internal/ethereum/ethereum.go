@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"log"
@@ -12,7 +11,6 @@ import (
 	dtos "web3crowdfunding/internal/DTOs"
 	"web3crowdfunding/internal/utils"
 
-	geth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -23,6 +21,7 @@ import (
 
 const defaultABIPath = "contracts/crowdfunding.abi"
 const ethClientAddress = "http://127.0.0.1:8545"
+const defaultGasEstimation = 250000
 
 func GetContractAddress() (string, error) {
 	contractAddress := os.Getenv("CONTRACT_ADDRESS")
@@ -124,32 +123,14 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 		return dtos.UnsignedTxResponse{}, err
 	}
 
-	ethClient, err := connectToEthereumNode()
-	if err != nil {
-		return dtos.UnsignedTxResponse{}, err
-	}
-
 	contractAddr := common.HexToAddress(contractAddress)
-	defer ethClient.Close()
-
-	callMsg := geth.CallMsg{
-		To:   &contractAddr,
-		Data: data,
-	}
-
-	gas, err := ethClient.EstimateGas(context.Background(), callMsg)
-	if err != nil {
-		log.Printf("Error estimating gas: %v", err)
-		return dtos.UnsignedTxResponse{}, err
-	}
 
 	unsigned := dtos.UnsignedTxResponse{
 		To:    contractAddr.Hex(),
 		Data:  fmt.Sprintf("0x%x", data),
-		Value: "0x0", // no ETH being sent here
-		Gas:   fmt.Sprintf("0x%x", gas),
+		Value: "0x0",
+		Gas:   fmt.Sprintf("0x%x", defaultGasEstimation),
 	}
-
 	return unsigned, nil
 }
 
@@ -251,7 +232,7 @@ func BuildDonationTransaction(campaignId int, value string) (dtos.UnsignedTxResp
 		To:    contractAddr.Hex(),
 		Data:  fmt.Sprintf("0x%x", data),
 		Value: "0x0",
-		Gas:   fmt.Sprintf("0x%x", 250000), // estimated gas
+		Gas:   fmt.Sprintf("0x%x", defaultGasEstimation),
 	}
 
 	return unsigned, nil
@@ -293,4 +274,34 @@ func ExecuteDonationToCompaign(campaignId int, value string) (*types.Transaction
 	}
 
 	return transaction, nil
+}
+
+func BuildWithdrawTransaction(campaignId int) (dtos.UnsignedTxResponse, error) {
+	parsedABI, err := parseContractABI()
+	if err != nil {
+		return dtos.UnsignedTxResponse{}, err
+	}
+
+	campaignIdBigInt := big.NewInt(int64(campaignId))
+	data, err := parsedABI.Pack("withdraw", campaignIdBigInt)
+	if err != nil {
+		log.Printf("Error packing function data: %v", err)
+		return dtos.UnsignedTxResponse{}, err
+	}
+
+	contractAddress, err := GetContractAddress()
+	if err != nil {
+		return dtos.UnsignedTxResponse{}, err
+	}
+
+	contractAddr := common.HexToAddress(contractAddress)
+
+	unsigned := dtos.UnsignedTxResponse{
+		To:    contractAddr.Hex(),
+		Data:  fmt.Sprintf("0x%x", data),
+		Value: "0x0",
+		Gas:   fmt.Sprintf("0x%x", defaultGasEstimation),
+	}
+
+	return unsigned, nil
 }

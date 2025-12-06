@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"time"
+	dtos "web3crowdfunding/internal/DTOs"
 	"web3crowdfunding/internal/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -114,4 +115,32 @@ func SaveWithdrawCompletion(withdraw models.WithdrawDbEntity) error {
 
 	log.Println("Row inserted successfully.")
 	return nil
+}
+
+func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
+	pool, err := connect()
+	if err != nil {
+		return nil, err
+	}
+	defer pool.Close()
+
+	ctx := context.Background()
+	rows, err := pool.Query(ctx, `SELECT owner, target_amount, deadline_ts FROM campaigns WHERE owner = $1`, owner)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []dtos.CampaignDto
+
+	for rows.Next() {
+		var res dtos.CampaignDto
+		if err := rows.Scan(&res.Owner, &res.Target, &res.Deadline); err != nil {
+			return nil, err
+		}
+		results = append(results, res)
+	}
+
+	return results, nil
 }

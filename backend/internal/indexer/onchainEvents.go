@@ -154,11 +154,11 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 	}
 	campaignDbObj := models.CampaignDbEntity{
 		Id:          id.Int64(),
-		Owner:       owner.Hex(),
+		Owner:       owner,
 		Title:       out.Title,
 		Target:      out.Target.Int64(),
 		Deadline:    uint64(out.Deadline.Int64()),
-		TxHash:      lg.TxHash.Hex(),
+		TxHash:      lg.TxHash,
 		BlockNumber: lg.BlockNumber,
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
@@ -195,9 +195,9 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 
 	donationDbObj := models.DonationDbEntity{
 		CampaignId:  campaignId.Int64(),
-		Donor:       donor.Hex(),
+		Donor:       donor,
 		Amount:      out.Amount.Int64(),
-		TxHash:      lg.TxHash.Hex(),
+		TxHash:      lg.TxHash,
 		BlockNumber: lg.BlockNumber,
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
@@ -232,9 +232,9 @@ func saveWithdrawCompletion(parsedABI abi.ABI, lg types.Log) {
 
 	withdrawDbObj := models.WithdrawDbEntity{
 		CampaignId:  campaignId.Int64(),
-		Owner:       owner.Hex(),
+		Owner:       owner,
 		Amount:      out.Amount.Int64(),
-		TxHash:      lg.TxHash.Hex(),
+		TxHash:      lg.TxHash,
 		BlockNumber: lg.BlockNumber,
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
@@ -269,9 +269,9 @@ func saveDonationRefund(parsedABI abi.ABI, lg types.Log) {
 
 	refundDbObj := models.RefundDbEntity{
 		CampaignId:       campaignId.Int64(),
-		Donor:            donor.Hex(),
+		Donor:            donor,
 		TotalContributed: out.TotalContributed.Int64(),
-		TxHash:           lg.TxHash.Hex(),
+		TxHash:           lg.TxHash,
 		BlockNumber:      lg.BlockNumber,
 		BlockTime:        time.Unix(int64(lg.BlockTimestamp), 0),
 	}

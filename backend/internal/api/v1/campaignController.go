@@ -8,8 +8,11 @@ import (
 	"strconv"
 	"strings"
 	dtos "web3crowdfunding/internal/DTOs"
+	"web3crowdfunding/internal/db"
 	"web3crowdfunding/internal/ethereum"
 	"web3crowdfunding/internal/utils"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func StartController() {
@@ -18,6 +21,7 @@ func StartController() {
 
 	mux.HandleFunc("/api/v1/campaigns", getAll)
 	mux.HandleFunc("/api/v1/campaigns/{id}", getById)
+	mux.HandleFunc("/api/v1/campaigns/owner/{owner}", getCampaignsByOwner)
 	mux.HandleFunc("/api/v1/campaigns/create", create)
 	mux.HandleFunc("/api/v1/campaigns/unsigned", createUnsigned)
 
@@ -101,6 +105,38 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 	campaigns, err := ethereum.FetchAllCampaigns()
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(campaigns)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		fmt.Println("Error writing response:", err)
+		return
+	}
+}
+
+func getCampaignsByOwner(w http.ResponseWriter, r *http.Request) {
+	ownerAddress := r.PathValue("owner")
+
+	if ownerAddress == "" {
+		log.Println("Bad request: invalid campaign owner")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	addr := common.HexToAddress(ownerAddress)
+	addrBytes := addr.Bytes()
+	campaigns, err := db.GetCampaignsByOwner(addrBytes)
+
+	if err != nil {
+		log.Println("Error:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
