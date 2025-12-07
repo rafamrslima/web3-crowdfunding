@@ -15,6 +15,7 @@ export default function CreateCampaignPage() {
   const { account, walletClient, connectWallet } = useWallet();
   // Defaults (editable in the UI)
   const [owner, setOwner] = useState<string>(() => account || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
+  const [ownerManuallyEdited, setOwnerManuallyEdited] = useState(false);
   const [title, setTitle] = useState("Save the Amazon river");
   const [description, setDescription] = useState("Funding reforestation projects worldwide.");
   // Target amount in USDC as string
@@ -37,12 +38,12 @@ export default function CreateCampaignPage() {
     }
   };
 
-  // Update owner when account changes
+  // Update owner when account connects for the first time (only if it hasn't been manually edited)
   useEffect(() => {
-    if (account && owner === "0x70997970C51812dc3A010C7d01b50e0d17dc79C8") {
+    if (account && !ownerManuallyEdited) {
       setOwner(account);
     }
-  }, [account, owner]);
+  }, [account, ownerManuallyEdited]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -153,7 +154,10 @@ export default function CreateCampaignPage() {
               required
               pattern="^0x[a-fA-F0-9]{40}$"
               value={owner}
-              onChange={(e) => setOwner(e.target.value)}
+              onChange={(e) => {
+                setOwner(e.target.value);
+                setOwnerManuallyEdited(true);
+              }}
               placeholder="0x..."
               className="form-input"
             />

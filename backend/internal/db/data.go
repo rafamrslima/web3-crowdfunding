@@ -159,7 +159,10 @@ func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
 
 	ctx := context.Background()
 	rows, err := pool.Query(ctx,
-		`SELECT owner, title, description, target_amount, deadline_ts, image FROM campaigns WHERE owner = $1`, owner)
+		`SELECT c.owner, c.title, c.description, c.target_amount, c.deadline_ts, c.image, sum(d.amount) as amount_collected
+		FROM campaigns c left join donations d on c.campaign_id = d.campaign_id 
+	    WHERE c.owner = $1 GROUP BY c.owner, c.title, c.description, c.target_amount, c.deadline_ts, c.image
+		LIMIT 100`, owner)
 
 	if err != nil {
 		return nil, err
@@ -170,7 +173,7 @@ func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
 
 	for rows.Next() {
 		var res dtos.CampaignDto
-		if err := rows.Scan(&res.Owner, &res.Title, &res.Description, &res.Target, &res.Deadline, &res.Image); err != nil {
+		if err := rows.Scan(&res.Owner, &res.Title, &res.Description, &res.Target, &res.Deadline, &res.Image, &res.AmountCollected); err != nil {
 			return nil, err
 		}
 		results = append(results, res)
