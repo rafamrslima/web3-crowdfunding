@@ -158,8 +158,7 @@ func SaveCampaignCreated(client *ethclient.Client, parsedABI abi.ABI, lg types.L
 		return
 	}
 
-	title, description, image, err := db.GetTempCampaignMetadata(owner, tx.Nonce())
-
+	campaignMetadata, err := db.GetTempCampaignMetadata(owner, tx.Nonce())
 	if err != nil {
 		log.Println(err)
 		return
@@ -168,11 +167,11 @@ func SaveCampaignCreated(client *ethclient.Client, parsedABI abi.ABI, lg types.L
 	campaignDbObj := models.CampaignDbEntity{
 		Id:          id.Int64(),
 		Owner:       owner,
-		Title:       title,
-		Description: description,
+		Title:       campaignMetadata.Title,
+		Description: campaignMetadata.Description,
 		Target:      out.Target.Int64(),
 		Deadline:    uint64(out.Deadline.Int64()),
-		Image:       image,
+		Image:       campaignMetadata.Image,
 		TxHash:      lg.TxHash,
 		BlockNumber: lg.BlockNumber,
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),

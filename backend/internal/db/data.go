@@ -62,7 +62,8 @@ func SaveCampaignCreated(campaign models.CampaignDbEntity) error {
 	ctx := context.Background()
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO campaigns (campaign_id, owner, title, description, target_amount, deadline_ts, image, tx_hash, block_number, block_time) 
+		`INSERT INTO campaigns 
+		(campaign_id, owner, title, description, target_amount, deadline_ts, image, tx_hash, block_number, block_time) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
 		campaign.Id,
 		campaign.Owner,
@@ -157,7 +158,8 @@ func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
 	defer pool.Close()
 
 	ctx := context.Background()
-	rows, err := pool.Query(ctx, `SELECT owner, target_amount, deadline_ts FROM campaigns WHERE owner = $1`, owner)
+	rows, err := pool.Query(ctx,
+		`SELECT owner, title, description, target_amount, deadline_ts, image FROM campaigns WHERE owner = $1`, owner)
 
 	if err != nil {
 		return nil, err
@@ -168,7 +170,7 @@ func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
 
 	for rows.Next() {
 		var res dtos.CampaignDto
-		if err := rows.Scan(&res.Owner, &res.Target, &res.Deadline); err != nil {
+		if err := rows.Scan(&res.Owner, &res.Title, &res.Description, &res.Target, &res.Deadline, &res.Image); err != nil {
 			return nil, err
 		}
 		results = append(results, res)
@@ -177,10 +179,10 @@ func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
 	return results, nil
 }
 
-func GetTempCampaignMetadata(owner common.Address, nonce uint64) (string, string, string, error) {
+func GetTempCampaignMetadata(owner common.Address, nonce uint64) (models.CampaignMetadata, error) {
 	pool, err := connect()
 	if err != nil {
-		return "", "", "", err
+		return models.CampaignMetadata{}, err
 	}
 	defer pool.Close()
 
@@ -188,20 +190,15 @@ func GetTempCampaignMetadata(owner common.Address, nonce uint64) (string, string
 	rows, err := pool.Query(ctx, `SELECT title, description, image FROM tempCampaignMetadata WHERE owner = $1 and nonce = $2 LIMIT 1`, owner, nonce)
 
 	if err != nil {
-		return "", "", "", err
+		return models.CampaignMetadata{}, err
 	}
 	defer rows.Close()
 
-	var title string
-	var description string
-	var image string
-
+	var campaignMetadata models.CampaignMetadata
 	for rows.Next() {
-
-		if err := rows.Scan(&title, &description, &image); err != nil {
-			return "", "", "", err
+		if err := rows.Scan(&campaignMetadata.Title, &campaignMetadata.Description, &campaignMetadata.Image); err != nil {
+			return models.CampaignMetadata{}, err
 		}
 	}
-
-	return title, description, image, nil
+	return campaignMetadata, nil
 }
