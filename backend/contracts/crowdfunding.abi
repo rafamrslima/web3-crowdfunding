@@ -27,16 +27,6 @@
         "internalType": "address"
       },
       {
-        "name": "title",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "description",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
         "name": "target",
         "type": "uint256",
         "internalType": "uint256"
@@ -50,11 +40,6 @@
         "name": "amountCollected",
         "type": "uint256",
         "internalType": "uint256"
-      },
-      {
-        "name": "image",
-        "type": "string",
-        "internalType": "string"
       },
       {
         "name": "withdrawn",
@@ -98,16 +83,6 @@
         "internalType": "address"
       },
       {
-        "name": "_title",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "_description",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
         "name": "_target",
         "type": "uint256",
         "internalType": "uint256"
@@ -116,11 +91,6 @@
         "name": "_deadline",
         "type": "uint256",
         "internalType": "uint256"
-      },
-      {
-        "name": "_image",
-        "type": "string",
-        "internalType": "string"
       }
     ],
     "outputs": [
@@ -166,16 +136,6 @@
             "internalType": "address"
           },
           {
-            "name": "title",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
             "name": "target",
             "type": "uint256",
             "internalType": "uint256"
@@ -189,11 +149,6 @@
             "name": "amountCollected",
             "type": "uint256",
             "internalType": "uint256"
-          },
-          {
-            "name": "image",
-            "type": "string",
-            "internalType": "string"
           },
           {
             "name": "donators",
@@ -306,12 +261,6 @@
         "type": "address",
         "indexed": true,
         "internalType": "address"
-      },
-      {
-        "name": "title",
-        "type": "string",
-        "indexed": false,
-        "internalType": "string"
       },
       {
         "name": "target",

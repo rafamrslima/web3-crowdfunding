@@ -10,8 +10,10 @@ type CampaignDbEntity struct {
 	Id          int64
 	Owner       common.Address
 	Title       string
+	Description string
 	Target      int64
 	Deadline    uint64
+	Image       string
 	TxHash      common.Hash
 	BlockNumber uint64
 	BlockTime   time.Time

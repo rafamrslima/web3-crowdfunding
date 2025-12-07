@@ -9,6 +9,7 @@ import (
 	dtos "web3crowdfunding/internal/DTOs"
 	"web3crowdfunding/internal/models"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -29,6 +30,28 @@ func connect() (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
+func SaveTempCampaignMetadata(address common.Address, nonce uint64, title string, description string, image string) error {
+	pool, err := connect()
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
+	ctx := context.Background()
+
+	_, err = pool.Exec(ctx,
+		`INSERT INTO tempCampaignMetadata (owner, nonce, title, description, image) 
+		VALUES ($1, $2, $3, $4, $5)`,
+		address, nonce, title, description, image)
+
+	if err != nil {
+		return err
+	}
+
+	log.Println("Row inserted successfully.")
+	return nil
+}
+
 func SaveCampaignCreated(campaign models.CampaignDbEntity) error {
 	pool, err := connect()
 	if err != nil {
@@ -39,9 +62,18 @@ func SaveCampaignCreated(campaign models.CampaignDbEntity) error {
 	ctx := context.Background()
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO campaigns (campaign_id, owner, target_amount, deadline_ts, tx_hash, block_number, block_time) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		campaign.Id, campaign.Owner, campaign.Target, campaign.Deadline, campaign.TxHash, campaign.BlockNumber, campaign.BlockTime)
+		`INSERT INTO campaigns (campaign_id, owner, title, description, target_amount, deadline_ts, image, tx_hash, block_number, block_time) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		campaign.Id,
+		campaign.Owner,
+		campaign.Title,
+		campaign.Description,
+		campaign.Target,
+		campaign.Deadline,
+		campaign.Image,
+		campaign.TxHash,
+		campaign.BlockNumber,
+		campaign.BlockTime)
 
 	if err != nil {
 		return err
@@ -143,4 +175,33 @@ func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
 	}
 
 	return results, nil
+}
+
+func GetTempCampaignMetadata(owner common.Address, nonce uint64) (string, string, string, error) {
+	pool, err := connect()
+	if err != nil {
+		return "", "", "", err
+	}
+	defer pool.Close()
+
+	ctx := context.Background()
+	rows, err := pool.Query(ctx, `SELECT title, description, image FROM tempCampaignMetadata WHERE owner = $1 and nonce = $2 LIMIT 1`, owner, nonce)
+
+	if err != nil {
+		return "", "", "", err
+	}
+	defer rows.Close()
+
+	var title string
+	var description string
+	var image string
+
+	for rows.Next() {
+
+		if err := rows.Scan(&title, &description, &image); err != nil {
+			return "", "", "", err
+		}
+	}
+
+	return title, description, image, nil
 }

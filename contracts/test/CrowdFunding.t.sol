@@ -14,11 +14,8 @@ contract CrowdFundingTest is Test {
         crowdFunding = new CrowdFunding(usdc);
         uint256 campaignId = crowdFunding.createCampaign(
             campaignOwner,
-            "Test Campaign",
-            "A test campaign for crowdfunding",
             5 ether,
-            block.timestamp + 30 days,
-            "image.jpg"
+            block.timestamp + 30 days
         );
         
         assertEq(campaignId, 0);

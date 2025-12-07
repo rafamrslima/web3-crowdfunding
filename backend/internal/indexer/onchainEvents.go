@@ -124,7 +124,7 @@ func listenToEventCreation(contractAddr common.Address, parsedABI abi.ABI, ctx c
 		case lg := <-ch:
 			switch eventName {
 			case campaignCreationEvent:
-				SaveCampaignCreated(parsedABI, lg)
+				SaveCampaignCreated(wsClient, parsedABI, lg)
 			case donationReceivedEvent:
 				saveDonationReceived(parsedABI, lg)
 			case fundsWithdrawnEvent:
@@ -138,12 +138,11 @@ func listenToEventCreation(contractAddr common.Address, parsedABI abi.ABI, ctx c
 	}
 }
 
-func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
+func SaveCampaignCreated(client *ethclient.Client, parsedABI abi.ABI, lg types.Log) {
 	id := new(big.Int).SetBytes(lg.Topics[1].Bytes())
 	owner := common.BytesToAddress(lg.Topics[2].Bytes())
 
 	var out struct {
-		Title    string
 		Target   *big.Int
 		Deadline *big.Int
 	}
@@ -152,27 +151,42 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		log.Println("unpack:", err)
 		return
 	}
-	campaignDbObj := models.CampaignDbEntity{
-		Id:          id.Int64(),
-		Owner:       owner,
-		Title:       out.Title,
-		Target:      out.Target.Int64(),
-		Deadline:    uint64(out.Deadline.Int64()),
-		TxHash:      lg.TxHash,
-		BlockNumber: lg.BlockNumber,
-		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
+
+	tx, _, err := client.TransactionByHash(context.Background(), lg.TxHash)
+	if err != nil {
+		log.Println("Tx fetch error:", err)
+		return
 	}
 
-	err := db.SaveCampaignCreated(campaignDbObj)
+	title, description, image, err := db.GetTempCampaignMetadata(owner, tx.Nonce())
+
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	fmt.Printf("CampaignCreated id=%s owner=%s title=%s target=%s txHash=%s deadline=%d block=%d\n",
+	campaignDbObj := models.CampaignDbEntity{
+		Id:          id.Int64(),
+		Owner:       owner,
+		Title:       title,
+		Description: description,
+		Target:      out.Target.Int64(),
+		Deadline:    uint64(out.Deadline.Int64()),
+		Image:       image,
+		TxHash:      lg.TxHash,
+		BlockNumber: lg.BlockNumber,
+		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
+	}
+
+	err = db.SaveCampaignCreated(campaignDbObj)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	fmt.Printf("CampaignCreated id=%s owner=%s target=%s txHash=%s deadline=%d block=%d\n",
 		id.String(),
 		owner.Hex(),
-		out.Title,
 		out.Target.String(),
 		lg.TxHash,
 		out.Deadline.Uint64(),

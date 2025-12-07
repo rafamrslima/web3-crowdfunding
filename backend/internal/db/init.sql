@@ -1,8 +1,11 @@
 CREATE TABLE IF NOT EXISTS campaigns (
   campaign_id    BIGINT PRIMARY KEY,
   owner          BYTEA NOT NULL,
+  title          VARCHAR(50),
+  description    VARCHAR(300),
   target_amount  NUMERIC(78,0) NOT NULL,
   deadline_ts    BIGINT NOT NULL,
+  image          VARCHAR(50),
   tx_hash        BYTEA NOT NULL,
   block_number   BIGINT NOT NULL,
   block_time     TIMESTAMPTZ,
@@ -39,6 +42,16 @@ CREATE TABLE IF NOT EXISTS withdrawals (
   block_number   BIGINT NOT NULL,
   block_time     TIMESTAMPTZ,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS tempCampaignMetadata (
+  owner          BYTEA NOT NULL,
+  nonce          NUMERIC(78,0) NOT NULL,
+  title          VARCHAR(50),
+  description    VARCHAR(300),
+  image          VARCHAR(50),
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (owner, nonce)
 );
 
 CREATE TABLE IF NOT EXISTS sync_state (

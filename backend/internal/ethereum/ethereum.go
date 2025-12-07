@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	crowdfunding "web3crowdfunding/contracts"
 	dtos "web3crowdfunding/internal/DTOs"
+	"web3crowdfunding/internal/db"
 	"web3crowdfunding/internal/utils"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -112,7 +114,7 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 	}
 
 	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
-	data, err := parsedABI.Pack("createCampaign", campaign.Owner, campaign.Title, campaign.Description, target, deadline, campaign.Image)
+	data, err := parsedABI.Pack("createCampaign", campaign.Owner, target, deadline)
 	if err != nil {
 		log.Printf("Error packing function data: %v", err)
 		return dtos.UnsignedTxResponse{}, err
@@ -124,6 +126,23 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 	}
 
 	contractAddr := common.HexToAddress(contractAddress)
+	ethClient, err := connectToEthereumNode()
+
+	if err != nil {
+		return dtos.UnsignedTxResponse{}, err
+	}
+
+	nonce, err := ethClient.PendingNonceAt(context.Background(), campaign.Owner)
+
+	if err != nil {
+		return dtos.UnsignedTxResponse{}, err
+	}
+
+	err = db.SaveTempCampaignMetadata(campaign.Owner, nonce, campaign.Title, campaign.Description, campaign.Image)
+
+	if err != nil {
+		return dtos.UnsignedTxResponse{}, err
+	}
 
 	unsigned := dtos.UnsignedTxResponse{
 		To:    contractAddr.Hex(),
@@ -131,6 +150,7 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 		Value: "0x0",
 		Gas:   fmt.Sprintf("0x%x", defaultGasEstimation),
 	}
+
 	return unsigned, nil
 }
 
@@ -161,7 +181,7 @@ func ExecuteCampaignCreation(campaign dtos.CampaignDto) (*types.Transaction, err
 	}
 
 	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
-	transaction, err := contract.CreateCampaign(auth, campaign.Owner, campaign.Title, campaign.Description, target, deadline, campaign.Image)
+	transaction, err := contract.CreateCampaign(auth, campaign.Owner, target, deadline)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err

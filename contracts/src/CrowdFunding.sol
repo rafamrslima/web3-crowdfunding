@@ -14,12 +14,9 @@ contract CrowdFunding {
 
     struct Campaign {
         address owner;
-        string title;
-        string description;
         uint256 target;
         uint256 deadline;
         uint256 amountCollected;
-        string image;
         address[] donators;
         uint256[] donations;
         bool withdrawn;
@@ -28,7 +25,6 @@ contract CrowdFunding {
     event CampaignCreated(
         uint256 indexed id,
         address indexed owner,
-        string title,
         uint256 target,
         uint256 deadline
     );
@@ -55,22 +51,18 @@ contract CrowdFunding {
     mapping(uint256 => mapping(address => uint256)) public contributions;
     uint256 public numberOfCampaigns = 0;
 
-    function createCampaign(address _owner, string memory _title, string memory _description,
-    uint256 _target, uint256 _deadline, string memory _image) public returns (uint256) {
+    function createCampaign(address _owner, uint256 _target, uint256 _deadline) public returns (uint256) {
         uint256 id = numberOfCampaigns;
         Campaign storage campaign = campaigns[id];
         require(_deadline > block.timestamp, "The deadline should be a date in the future");
 
         campaign.owner = _owner;
-        campaign.title = _title;
-        campaign.description = _description;
         campaign.target = _target;
         campaign.deadline = _deadline;
         campaign.amountCollected = 0;
-        campaign.image = _image;
         campaign.withdrawn = false;
 
-        emit CampaignCreated(id, campaign.owner, campaign.title, campaign.target, campaign.deadline);
+        emit CampaignCreated(id, campaign.owner, campaign.target, campaign.deadline);
 
         numberOfCampaigns++;
         return id;
