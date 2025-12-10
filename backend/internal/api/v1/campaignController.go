@@ -28,6 +28,8 @@ func StartController() {
 	mux.HandleFunc("/api/v1/donations", donate)
 	mux.HandleFunc("/api/v1/donations/unsigned", donateUnsigned)
 
+	mux.HandleFunc("/api/v1/campaigns/withdraw/{id}", withdraw)
+
 	log.Println("Server starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", WithCORS(mux)))
 }
@@ -237,6 +239,35 @@ func donate(w http.ResponseWriter, r *http.Request) {
 
 	transaction, err := ethereum.ExecuteDonationToCompaign(donation.CampaignId, donation.Value)
 
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(transaction)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		fmt.Println("Error writing response:", err)
+		return
+	}
+}
+
+func withdraw(w http.ResponseWriter, r *http.Request) {
+	campaignId := r.PathValue("id")
+
+	campaignIdConverted, err := strconv.Atoi(campaignId)
+	if err != nil {
+		log.Println("Bad request: could not convert campaignId", campaignId, "error:", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	transaction, err := ethereum.BuildWithdrawTransaction(campaignIdConverted)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from './WalletContext';
 import { API_BASE } from './config';
+import type { Hex } from 'viem';
 import './App.css';
 
 interface UserCampaign {
@@ -15,10 +16,15 @@ interface UserCampaign {
 }
 
 export default function MyCampaignsPage() {
-  const { account } = useWallet();
+  const { account, walletClient } = useWallet();
   const [campaigns, setCampaigns] = useState<UserCampaign[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Withdrawal states
+  const [withdrawLoading, setWithdrawLoading] = useState<Record<number, boolean>>({});
+  const [withdrawSuccess, setWithdrawSuccess] = useState<Record<number, string | null>>({});
+  const [withdrawError, setWithdrawError] = useState<Record<number, string | null>>({});
 
   const fetchUserCampaigns = useCallback(async () => {
     if (!account) return;
@@ -91,6 +97,112 @@ export default function MyCampaignsPage() {
       return Math.min((collected / targetAmount) * 100, 100);
     } catch {
       return 0;
+    }
+  };
+
+  const isTargetReached = (target: string, collected: number | null): boolean => {
+    if (!collected) return false;
+    try {
+      const targetAmount = parseInt(target);
+      return collected >= targetAmount;
+    } catch {
+      return false;
+    }
+  };
+
+  const canWithdraw = (campaign: UserCampaign): boolean => {
+    return isDeadlinePassed(campaign.deadline) && isTargetReached(campaign.target, campaign.AmountCollected);
+  };
+
+  const getWithdrawButtonText = (campaign: UserCampaign, campaignIndex: number): string => {
+    if (withdrawLoading[campaignIndex]) return 'Processing...';
+    if (!campaign.AmountCollected || campaign.AmountCollected === 0) return '💰 No Funds Yet';
+    if (!isDeadlinePassed(campaign.deadline)) return '⏰ Deadline Not Reached';
+    if (!isTargetReached(campaign.target, campaign.AmountCollected)) return '🎯 Target Not Reached';
+    return '💰 Withdraw';
+  };
+
+  const getWithdrawButtonTitle = (campaign: UserCampaign): string => {
+    if (!campaign.AmountCollected || campaign.AmountCollected === 0) {
+      return 'No funds collected yet';
+    }
+    if (!isDeadlinePassed(campaign.deadline)) {
+      return 'Withdrawal only available after campaign deadline';
+    }
+    if (!isTargetReached(campaign.target, campaign.AmountCollected)) {
+      return 'Withdrawal only available when target amount is reached';
+    }
+    return 'Withdraw funds from this campaign';
+  };
+
+  const handleWithdraw = async (campaignIndex: number) => {
+    if (!walletClient || !account) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    try {
+      setWithdrawLoading(prev => ({ ...prev, [campaignIndex]: true }));
+      setWithdrawError(prev => ({ ...prev, [campaignIndex]: null }));
+      setWithdrawSuccess(prev => ({ ...prev, [campaignIndex]: null }));
+
+      console.log(`Creating withdraw transaction for campaign ${campaignIndex}...`);
+      
+      // Call API to get unsigned transaction
+      const response = await fetch(`${API_BASE}/api/v1/campaigns/withdraw/${campaignIndex}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData}`);
+      }
+
+      const unsignedTx = await response.json();
+      console.log('Received unsigned withdraw transaction:', unsignedTx);
+
+      // Validate transaction data
+      if (!unsignedTx.to || !unsignedTx.data || !unsignedTx.gas) {
+        throw new Error('Invalid transaction data received from server');
+      }
+
+      console.log('Requesting MetaMask signature for withdrawal...');
+      
+      // Send transaction through MetaMask
+      const txHash = await walletClient.sendTransaction({
+        account,
+        to: unsignedTx.to as `0x${string}`,
+        data: unsignedTx.data as Hex,
+        value: BigInt(unsignedTx.value || '0x0'),
+        gas: BigInt(unsignedTx.gas),
+        chain: undefined
+      });
+
+      console.log('✅ Withdrawal transaction successful:', txHash);
+      setWithdrawSuccess(prev => ({ ...prev, [campaignIndex]: txHash }));
+      
+      // Refresh campaigns data after successful withdrawal
+      setTimeout(() => {
+        fetchUserCampaigns();
+      }, 3000); // Wait 3 seconds for blockchain confirmation
+
+    } catch (err) {
+      console.error('Withdrawal failed:', err);
+      const error = err as Error;
+      
+      let errorMessage = 'Failed to withdraw funds';
+      if (error.message?.includes('User rejected') || error.message?.includes('rejected')) {
+        errorMessage = 'Transaction was rejected by user';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient ETH balance for transaction fees';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setWithdrawError(prev => ({ ...prev, [campaignIndex]: errorMessage }));
+    } finally {
+      setWithdrawLoading(prev => ({ ...prev, [campaignIndex]: false }));
     }
   };
 
@@ -169,8 +281,11 @@ export default function MyCampaignsPage() {
       ) : (
         <>
           <div style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: 'var(--light-gray)', borderRadius: 'var(--border-radius)' }}>
-            <p style={{ margin: 0, color: 'var(--text-muted)' }}>
+            <p style={{ margin: '0 0 0.5rem 0', color: 'var(--text-muted)' }}>
               <strong>Total Campaigns:</strong> {campaigns.length}
+            </p>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+              💡 <strong>Withdrawal Note:</strong> You can only withdraw funds after the campaign deadline has passed AND the target amount has been reached.
             </p>
           </div>
           
@@ -248,23 +363,35 @@ export default function MyCampaignsPage() {
 
                 <div className="campaign-actions">
                   <button 
-                    className="btn btn-success"
-                    disabled={isDeadlinePassed(campaign.deadline) || !campaign.AmountCollected || campaign.AmountCollected === 0}
-                    title={
-                      !campaign.AmountCollected || campaign.AmountCollected === 0 
-                        ? 'No funds collected yet' 
-                        : isDeadlinePassed(campaign.deadline) 
-                          ? 'Campaign has ended' 
-                          : 'Withdraw funds from this campaign'
-                    }
+                    className={`btn ${canWithdraw(campaign) ? 'btn-success' : 'btn-secondary'}`}
+                    disabled={!canWithdraw(campaign) || withdrawLoading[index]}
+                    onClick={() => handleWithdraw(index)}
+                    title={getWithdrawButtonTitle(campaign)}
                   >
-                    {!campaign.AmountCollected || campaign.AmountCollected === 0 
-                      ? '💰 No Funds Yet' 
-                      : isDeadlinePassed(campaign.deadline) 
-                        ? '⏰ Campaign Ended' 
-                        : '💰 Withdraw'}
+                    {withdrawLoading[index] && <span className="loading-spinner"></span>}
+                    {getWithdrawButtonText(campaign, index)}
                   </button>
                 </div>
+
+                {/* Withdrawal Success Message */}
+                {withdrawSuccess[index] && (
+                  <div className="message-box message-success" style={{ marginTop: '1rem' }}>
+                    <h4 className="message-title">✅ Withdrawal Successful!</h4>
+                    <p className="message-text">Funds have been withdrawn from your campaign.</p>
+                    <p className="message-text">
+                      <strong>Transaction ID:</strong>
+                      <code className="transaction-hash">{withdrawSuccess[index]}</code>
+                    </p>
+                  </div>
+                )}
+
+                {/* Withdrawal Error Message */}
+                {withdrawError[index] && (
+                  <div className="message-box message-error" style={{ marginTop: '1rem' }}>
+                    <h4 className="message-title">❌ Withdrawal Failed</h4>
+                    <p className="message-text">{withdrawError[index]}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
