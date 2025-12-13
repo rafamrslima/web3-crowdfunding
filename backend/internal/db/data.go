@@ -49,7 +49,7 @@ func SaveTempCampaignMetadata(address common.Address, nonce uint64, title string
 		return err
 	}
 
-	log.Println("Row inserted successfully.")
+	log.Println("Row inserted successfully into tempCampaignMetadata.")
 	return nil
 }
 
@@ -82,7 +82,7 @@ func SaveCampaignCreated(campaign models.CampaignDbEntity) error {
 		return err
 	}
 
-	log.Println("Row inserted successfully.")
+	log.Println("Row inserted successfully into campaigns.")
 	return nil
 }
 
@@ -105,7 +105,7 @@ func SaveDonationReceived(donation models.DonationDbEntity) error {
 		return err
 	}
 
-	log.Println("Row inserted successfully.")
+	log.Println("Row inserted successfully into donations.")
 	return nil
 }
 
@@ -128,7 +128,7 @@ func SaveRefundIssued(refund models.RefundDbEntity) error {
 		return err
 	}
 
-	log.Println("Row inserted successfully.")
+	log.Println("Row inserted successfully into refunds.")
 	return nil
 }
 
@@ -151,7 +151,7 @@ func SaveWithdrawCompletion(withdraw models.WithdrawDbEntity) error {
 		return err
 	}
 
-	log.Println("Row inserted successfully.")
+	log.Println("Row inserted successfully into withdrawals.")
 	return nil
 }
 
