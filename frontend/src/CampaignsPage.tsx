@@ -60,13 +60,24 @@ export default function CampaignsPage() {
     }
   };
 
-  const formatDeadline = (unixTimestamp: number): string => {
-    return new Date(unixTimestamp * 1000).toLocaleDateString();
+  const formatDeadline = (unixTimestamp: string): string => {
+    try {
+      const timestamp = parseInt(unixTimestamp);
+      return new Date(timestamp * 1000).toLocaleDateString();
+    } catch {
+      return 'Invalid Date';
+    }
   };
 
-  const calculateProgress = (target: number, collected: number): number => {
-    if (target === 0) return 0;
-    return Math.min((collected / target) * 100, 100);
+  const calculateProgress = (target: string, collected: number | null): number => {
+    if (!collected || collected === 0) return 0;
+    try {
+      const targetAmount = parseInt(target);
+      if (targetAmount === 0) return 0;
+      return Math.min((collected / targetAmount) * 100, 100);
+    } catch {
+      return 0;
+    }
   };
 
   // Load USDC balance function
@@ -167,8 +178,8 @@ export default function CampaignsPage() {
 
       console.log("Creating unsigned donation transaction...", payload);
 
-      // Call the unsigned donation endpoint
-      const response = await fetch(`${API_BASE}/api/v1/donations/unsigned`, {
+      // Call the donation endpoint
+      const response = await fetch(`${API_BASE}/api/v1/donations/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -265,7 +276,7 @@ export default function CampaignsPage() {
         <h1 className="page-title">🌟 Active Campaigns</h1>
       </div>
 
-      {campaigns.length === 0 ? (
+      {campaigns === null || campaigns.length === 0 ? (
         <div className="message-box message-error">
           <h4 className="message-title">No Campaigns Found</h4>
           <p className="message-text">
@@ -280,10 +291,10 @@ export default function CampaignsPage() {
           {campaigns.map((campaign, index) => (
             <div key={index} className="campaign-card">
               <div className="campaign-header">
-                {campaign.Image && (
+                {campaign.image && campaign.image.trim() !== '' && (
                   <img 
-                    src={campaign.Image} 
-                    alt={campaign.Title}
+                    src={campaign.image} 
+                    alt={campaign.title || 'Campaign Image'}
                     className="campaign-image"
                     onError={(e) => {
                       // Hide image if it fails to load
@@ -291,26 +302,32 @@ export default function CampaignsPage() {
                     }}
                   />
                 )}
-                <h3 className="campaign-title">{campaign.Title}</h3>
+                <h3 className="campaign-title">
+                  {campaign.title && campaign.title.trim() !== '' ? campaign.title : 'Untitled Campaign'}
+                </h3>
               </div>
 
               <div className="campaign-content">
-                <p className="campaign-description">{campaign.Description}</p>
+                <p className="campaign-description">
+                  {campaign.description && campaign.description.trim() !== '' ? campaign.description : 'No description provided.'}
+                </p>
                 
                 <div className="campaign-stats">
                   <div className="stat-item">
                     <span className="stat-label">Target:</span>
-                    <span className="stat-value">${formatToUsdc(campaign.Target)} USDC</span>
+                    <span className="stat-value">${formatToUsdc(parseInt(campaign.target))} USDC</span>
                   </div>
                   
                   <div className="stat-item">
                     <span className="stat-label">Collected:</span>
-                    <span className="stat-value">${formatToUsdc(campaign.AmountCollected)} USDC</span>
+                    <span className="stat-value">
+                      ${campaign.amountCollected ? formatToUsdc(campaign.amountCollected) : '0'} USDC
+                    </span>
                   </div>
                   
                   <div className="stat-item">
                     <span className="stat-label">Deadline:</span>
-                    <span className="stat-value">{formatDeadline(campaign.Deadline)}</span>
+                    <span className="stat-value">{formatDeadline(campaign.deadline)}</span>
                   </div>
                 </div>
 
@@ -318,17 +335,17 @@ export default function CampaignsPage() {
                   <div className="progress-bar">
                     <div 
                       className="progress-fill" 
-                      style={{ width: `${calculateProgress(campaign.Target, campaign.AmountCollected)}%` }}
+                      style={{ width: `${calculateProgress(campaign.target, campaign.amountCollected)}%` }}
                     ></div>
                   </div>
                   <span className="progress-text">
-                    {calculateProgress(campaign.Target, campaign.AmountCollected).toFixed(1)}% funded
+                    {calculateProgress(campaign.target, campaign.amountCollected).toFixed(1)}% funded
                   </span>
                 </div>
 
                 <div className="campaign-owner">
                   <span className="stat-label">Owner:</span>
-                  <span className="wallet-address">{campaign.Owner.slice(0, 6)}...{campaign.Owner.slice(-4)}</span>
+                  <span className="wallet-address">{campaign.owner.slice(0, 6)}...{campaign.owner.slice(-4)}</span>
                 </div>
               </div>
 

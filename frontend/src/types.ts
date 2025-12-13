@@ -1,16 +1,16 @@
 // types.ts - Type definitions for the application
 
 export interface Campaign {
-  Owner: string;
-  Title: string;
-  Description: string;
-  Target: number; // USDC amount as number (converted from string)
-  Deadline: number; // Unix timestamp
-  AmountCollected: number; // USDC amount as number (converted from string)
-  Image: string;
-  Donators: string[];
-  Donations: number[];
-  Withdrawn: boolean; 
+  owner: string;
+  title: string;
+  description: string;
+  target: string; // USDC amount as string
+  deadline: string; // Unix timestamp as string
+  amountCollected: number | null; // USDC amount as number or null
+  image: string;
+  donors?: string[]; // Optional for backward compatibility (was 'Donators')
+  donations?: number[]; // Optional for backward compatibility
+  withdrawn?: boolean; // Optional for backward compatibility
 }
 
 export interface UnsignedTransaction {

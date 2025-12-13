@@ -20,13 +20,14 @@ func StartController() {
 	mux.HandleFunc("/", homePage)
 
 	mux.HandleFunc("/api/v1/campaigns", getAll)
-	mux.HandleFunc("/api/v1/campaigns/{id}", getById)
+	mux.HandleFunc("/api/v1/campaigns/onchain", getAllOnChain)
+	mux.HandleFunc("/api/v1/campaigns/onchain/{id}", getById)
 	mux.HandleFunc("/api/v1/campaigns/owner/{owner}", getCampaignsByOwner)
-	mux.HandleFunc("/api/v1/campaigns/create", create)
-	mux.HandleFunc("/api/v1/campaigns/unsigned", createUnsigned)
 
-	mux.HandleFunc("/api/v1/donations", donate)
-	mux.HandleFunc("/api/v1/donations/unsigned", donateUnsigned)
+	mux.HandleFunc("/api/v1/campaigns/adm/create", create)
+	mux.HandleFunc("/api/v1/campaigns/create", createUnsigned)
+	mux.HandleFunc("/api/v1/donations/adm/create", donate)
+	mux.HandleFunc("/api/v1/donations/create", donateUnsigned)
 
 	mux.HandleFunc("/api/v1/campaigns/withdraw/{id}", withdraw)
 
@@ -103,8 +104,29 @@ func create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getAll(w http.ResponseWriter, r *http.Request) {
+func getAllOnChain(w http.ResponseWriter, r *http.Request) {
 	campaigns, err := ethereum.FetchAllCampaigns()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(campaigns)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		fmt.Println("Error writing response:", err)
+		return
+	}
+}
+
+func getAll(w http.ResponseWriter, r *http.Request) {
+	campaigns, err := db.FetchAllCampaigns()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -269,6 +291,7 @@ func withdraw(w http.ResponseWriter, r *http.Request) {
 
 	transaction, err := ethereum.BuildWithdrawTransaction(campaignIdConverted)
 	if err != nil {
+		fmt.Println("Error when building transaction:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

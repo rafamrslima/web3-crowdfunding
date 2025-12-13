@@ -12,7 +12,7 @@ interface UserCampaign {
   target: string; // USDC amount as string from API
   deadline: string; // Unix timestamp as string from API
   image: string;
-  AmountCollected: number | null; // USDC amount collected, can be null
+  amountCollected: number | null; // USDC amount collected, can be null
 }
 
 export default function MyCampaignsPage() {
@@ -111,25 +111,25 @@ export default function MyCampaignsPage() {
   };
 
   const canWithdraw = (campaign: UserCampaign): boolean => {
-    return isDeadlinePassed(campaign.deadline) && isTargetReached(campaign.target, campaign.AmountCollected);
+    return isDeadlinePassed(campaign.deadline) && isTargetReached(campaign.target, campaign.amountCollected);
   };
 
   const getWithdrawButtonText = (campaign: UserCampaign, campaignIndex: number): string => {
     if (withdrawLoading[campaignIndex]) return 'Processing...';
-    if (!campaign.AmountCollected || campaign.AmountCollected === 0) return '💰 No Funds Yet';
+    if (!campaign.amountCollected || campaign.amountCollected === 0) return '💰 No Funds Yet';
     if (!isDeadlinePassed(campaign.deadline)) return '⏰ Deadline Not Reached';
-    if (!isTargetReached(campaign.target, campaign.AmountCollected)) return '🎯 Target Not Reached';
+    if (!isTargetReached(campaign.target, campaign.amountCollected)) return '🎯 Target Not Reached';
     return '💰 Withdraw';
   };
 
   const getWithdrawButtonTitle = (campaign: UserCampaign): string => {
-    if (!campaign.AmountCollected || campaign.AmountCollected === 0) {
+    if (!campaign.amountCollected || campaign.amountCollected === 0) {
       return 'No funds collected yet';
     }
     if (!isDeadlinePassed(campaign.deadline)) {
       return 'Withdrawal only available after campaign deadline';
     }
-    if (!isTargetReached(campaign.target, campaign.AmountCollected)) {
+    if (!isTargetReached(campaign.target, campaign.amountCollected)) {
       return 'Withdrawal only available when target amount is reached';
     }
     return 'Withdraw funds from this campaign';
@@ -323,7 +323,7 @@ export default function MyCampaignsPage() {
                     <div className="stat-item">
                       <span className="stat-label">Collected:</span>
                       <span className="stat-value">
-                        ${campaign.AmountCollected ? formatToUsdc(campaign.AmountCollected.toString()) : '0'} USDC
+                        ${campaign.amountCollected ? formatToUsdc(campaign.amountCollected.toString()) : '0'} USDC
                       </span>
                     </div>
                     
@@ -347,11 +347,11 @@ export default function MyCampaignsPage() {
                     <div className="progress-bar">
                       <div 
                         className="progress-fill" 
-                        style={{ width: `${calculateProgress(campaign.target, campaign.AmountCollected)}%` }}
+                        style={{ width: `${calculateProgress(campaign.target, campaign.amountCollected)}%` }}
                       ></div>
                     </div>
                     <span className="progress-text">
-                      {calculateProgress(campaign.target, campaign.AmountCollected).toFixed(1)}% funded
+                      {calculateProgress(campaign.target, campaign.amountCollected).toFixed(1)}% funded
                     </span>
                   </div>
 

@@ -11,5 +11,5 @@ type CampaignDto struct {
 	Target          string         `json:"target"`
 	Deadline        string         `json:"deadline"`
 	Image           string         `json:"image"`
-	AmountCollected *uint64
+	AmountCollected *uint64        `json:"amountCollected"`
 }

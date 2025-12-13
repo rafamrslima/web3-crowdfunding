@@ -45,6 +45,7 @@ func SaveTempCampaignMetadata(address common.Address, nonce uint64, title string
 		address, nonce, title, description, image)
 
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
@@ -77,6 +78,7 @@ func SaveCampaignCreated(campaign models.CampaignDbEntity) error {
 		campaign.BlockTime)
 
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
@@ -99,6 +101,7 @@ func SaveDonationReceived(donation models.DonationDbEntity) error {
 		donation.CampaignId, donation.Donor, donation.Amount, donation.TxHash, donation.BlockNumber, donation.BlockTime)
 
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
@@ -121,6 +124,7 @@ func SaveRefundIssued(refund models.RefundDbEntity) error {
 		refund.CampaignId, refund.Donor, refund.TotalContributed, refund.TxHash, refund.BlockNumber, refund.BlockTime)
 
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
@@ -143,11 +147,45 @@ func SaveWithdrawCompletion(withdraw models.WithdrawDbEntity) error {
 		withdraw.CampaignId, withdraw.Owner, withdraw.Amount, withdraw.TxHash, withdraw.BlockNumber, withdraw.BlockTime)
 
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
 	log.Println("Row inserted successfully.")
 	return nil
+}
+
+func FetchAllCampaigns() ([]dtos.CampaignDto, error) {
+	pool, err := connect()
+	if err != nil {
+		return nil, err
+	}
+	defer pool.Close()
+
+	ctx := context.Background()
+	rows, err := pool.Query(ctx,
+		`SELECT c.owner, c.title, c.description, c.target_amount, c.deadline_ts, c.image, sum(d.amount) as amount_collected
+		FROM campaigns c left join donations d on c.campaign_id = d.campaign_id 
+	    GROUP BY c.owner, c.title, c.description, c.target_amount, c.deadline_ts, c.image LIMIT 100`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []dtos.CampaignDto
+
+	for rows.Next() {
+		var res dtos.CampaignDto
+		if err := rows.Scan(&res.Owner, &res.Title, &res.Description, &res.Target, &res.Deadline, &res.Image, &res.AmountCollected); err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		results = append(results, res)
+	}
+
+	return results, nil
 }
 
 func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
@@ -165,6 +203,7 @@ func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
 		LIMIT 100`, owner)
 
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	defer rows.Close()

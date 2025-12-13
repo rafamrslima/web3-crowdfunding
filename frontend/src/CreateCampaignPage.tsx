@@ -79,8 +79,8 @@ export default function CreateCampaignPage() {
         image: image || ""                  // keep as empty string if not provided
       };
 
-      console.log("Creating unsigned transaction...");
-      const res = await fetch(`${API_BASE}/api/v1/campaigns/unsigned`, {
+      console.log("Creating campaign transaction...");
+      const res = await fetch(`${API_BASE}/api/v1/campaigns/create`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload)
