@@ -13,9 +13,9 @@ contract CrowdFundingTest is Test {
         address usdc = vm.envAddress("USDC_ADDRESS");
         crowdFunding = new CrowdFunding(usdc);
         uint256 campaignId = crowdFunding.createCampaign(
-            campaignOwner,
             5 ether,
-            block.timestamp + 30 days
+            block.timestamp + 30 days,
+            keccak256(abi.encodePacked("hash"))
         );
         
         assertEq(campaignId, 0);

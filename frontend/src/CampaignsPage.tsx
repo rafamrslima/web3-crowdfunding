@@ -38,6 +38,7 @@ export default function CampaignsPage() {
       }
       
       const data: Campaign[] = await response.json();
+      // Ensure campaigns are sorted by ID (array index represents campaign ID)
       setCampaigns(data);
       
     } catch (err) {
@@ -274,6 +275,9 @@ export default function CampaignsPage() {
     <div className="app-container">
       <div className="page-header">
         <h1 className="page-title">🌟 Active Campaigns</h1>
+        {campaigns.length > 0 && (
+          <p className="page-subtitle">{campaigns.length} campaign{campaigns.length !== 1 ? 's' : ''} available</p>
+        )}
       </div>
 
       {campaigns === null || campaigns.length === 0 ? (
@@ -302,9 +306,12 @@ export default function CampaignsPage() {
                     }}
                   />
                 )}
-                <h3 className="campaign-title">
-                  {campaign.title && campaign.title.trim() !== '' ? campaign.title : 'Untitled Campaign'}
-                </h3>
+                <div className="campaign-title-section">
+                  <div className="campaign-id">#{index}</div>
+                  <h3 className="campaign-title">
+                    {campaign.title && campaign.title.trim() !== '' ? campaign.title : 'Untitled Campaign'}
+                  </h3>
+                </div>
               </div>
 
               <div className="campaign-content">

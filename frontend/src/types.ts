@@ -18,4 +18,5 @@ export interface UnsignedTransaction {
   data: string; // Transaction data (hex)
   value: string; // Value in USDC (hex)
   gas: string; // Gas limit (hex)
+  creationId?: string; // Campaign creation identifier (only for campaign creation)
 }

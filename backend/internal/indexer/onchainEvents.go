@@ -141,6 +141,7 @@ func listenToEventCreation(contractAddr common.Address, parsedABI abi.ABI, ctx c
 func SaveCampaignCreated(client *ethclient.Client, parsedABI abi.ABI, lg types.Log) {
 	id := new(big.Int).SetBytes(lg.Topics[1].Bytes())
 	owner := common.BytesToAddress(lg.Topics[2].Bytes())
+	creationId := lg.Topics[3]
 
 	var out struct {
 		Target   *big.Int
@@ -152,13 +153,7 @@ func SaveCampaignCreated(client *ethclient.Client, parsedABI abi.ABI, lg types.L
 		return
 	}
 
-	tx, _, err := client.TransactionByHash(context.Background(), lg.TxHash)
-	if err != nil {
-		log.Println("Tx fetch error:", err)
-		return
-	}
-
-	campaignMetadata, err := db.GetTempCampaignMetadata(owner, tx.Nonce())
+	campaignMetadata, err := db.GetTempCampaignMetadata(owner, creationId.Hex())
 	if err != nil {
 		log.Println(err)
 		return
@@ -183,9 +178,10 @@ func SaveCampaignCreated(client *ethclient.Client, parsedABI abi.ABI, lg types.L
 		return
 	}
 
-	fmt.Printf("CampaignCreated id=%s owner=%s target=%s txHash=%s deadline=%d block=%d\n",
+	fmt.Printf("CampaignCreated id=%s owner=%s creationId=%s target=%s txHash=%s deadline=%d block=%d\n",
 		id.String(),
 		owner.Hex(),
+		creationId,
 		out.Target.String(),
 		lg.TxHash,
 		out.Deadline.Uint64(),

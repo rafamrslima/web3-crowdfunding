@@ -304,9 +304,12 @@ export default function MyCampaignsPage() {
                       }}
                     />
                   )}
-                  <h3 className="campaign-title">
-                    {campaign.title || `Campaign #${index + 1}`}
-                  </h3>
+                  <div className="campaign-title-section">
+                    <div className="campaign-id">#{index}</div>
+                    <h3 className="campaign-title">
+                      {campaign.title || 'Untitled Campaign'}
+                    </h3>
+                  </div>
                 </div>
 
                 <div className="campaign-content">

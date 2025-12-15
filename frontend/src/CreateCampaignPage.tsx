@@ -28,12 +28,14 @@ export default function CreateCampaignPage() {
   // UI state management
   const [isCreating, setIsCreating] = useState(false);
   const [successTxHash, setSuccessTxHash] = useState<string | null>(null);
+  const [creationId, setCreationId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Clear messages when user starts editing form
   const clearMessages = () => {
-    if (successTxHash || errorMessage) {
+    if (successTxHash || errorMessage || creationId) {
       setSuccessTxHash(null);
+      setCreationId(null);
       setErrorMessage(null);
     }
   };
@@ -51,6 +53,7 @@ export default function CreateCampaignPage() {
     // Reset previous states
     setErrorMessage(null);
     setSuccessTxHash(null);
+    setCreationId(null);
     setIsCreating(true);
 
     try {
@@ -93,7 +96,12 @@ export default function CreateCampaignPage() {
         throw new Error(`API error: ${res.status} ${res.statusText} - ${JSON.stringify(built)}`);
       }
 
-      console.log("Requesting MetaMask signature...");
+      // Validate that we received a creationId
+      if (!built.creationId) {
+        throw new Error("Server did not provide a creationId for the campaign");
+      }
+
+      console.log(`Requesting MetaMask signature for campaign creation (ID: ${built.creationId})...`);
       const txHash = await walletClient.sendTransaction({
         account,
         to: built.to as `0x${string}`,
@@ -105,8 +113,9 @@ export default function CreateCampaignPage() {
         // omit fees/nonce; wallet will populate
       });
       
-      console.log("✅ Transaction successful:", txHash);
+      console.log(`✅ Transaction successful for campaign ${built.creationId}:`, txHash);
       setSuccessTxHash(txHash);
+      setCreationId(built.creationId);
       
     } catch (err) {
       console.error("Campaign creation error:", err);
@@ -247,6 +256,12 @@ export default function CreateCampaignPage() {
             <div className="message-box message-success">
               <h4 className="message-title">✅ Campaign Created Successfully!</h4>
               <p className="message-text">Your campaign has been created and submitted to the blockchain.</p>
+              {creationId && (
+                <p className="message-text">
+                  <strong>Campaign ID:</strong>
+                  <code className="transaction-hash">{creationId}</code>
+                </p>
+              )}
               <p className="message-text">
                 <strong>Transaction ID:</strong>
                 <code className="transaction-hash">{successTxHash}</code>

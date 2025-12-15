@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"log"
@@ -19,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/google/uuid"
 )
 
 const defaultABIPath = "contracts/crowdfunding.abi"
@@ -114,7 +114,10 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 	}
 
 	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
-	data, err := parsedABI.Pack("createCampaign", campaign.Owner, target, deadline)
+	creationIdStr := uuid.NewString()
+	creationId := crypto.Keccak256Hash([]byte(creationIdStr))
+
+	data, err := parsedABI.Pack("createCampaign", target, deadline, creationId)
 	if err != nil {
 		log.Printf("Error packing function data: %v", err)
 		return dtos.UnsignedTxResponse{}, err
@@ -126,29 +129,19 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 	}
 
 	contractAddr := common.HexToAddress(contractAddress)
-	ethClient, err := connectToEthereumNode()
 
-	if err != nil {
-		return dtos.UnsignedTxResponse{}, err
-	}
-
-	nonce, err := ethClient.PendingNonceAt(context.Background(), campaign.Owner)
-
-	if err != nil {
-		return dtos.UnsignedTxResponse{}, err
-	}
-
-	err = db.SaveTempCampaignMetadata(campaign.Owner, nonce, campaign.Title, campaign.Description, campaign.Image)
+	err = db.SaveTempCampaignMetadata(creationId.Hex(), campaign.Owner, campaign.Title, campaign.Description, campaign.Image)
 
 	if err != nil {
 		return dtos.UnsignedTxResponse{}, err
 	}
 
 	unsigned := dtos.UnsignedTxResponse{
-		To:    contractAddr.Hex(),
-		Data:  fmt.Sprintf("0x%x", data),
-		Value: "0x0",
-		Gas:   fmt.Sprintf("0x%x", defaultGasEstimation),
+		To:         contractAddr.Hex(),
+		Data:       fmt.Sprintf("0x%x", data),
+		Value:      "0x0",
+		Gas:        fmt.Sprintf("0x%x", defaultGasEstimation),
+		CreationId: creationId.Hex(),
 	}
 
 	return unsigned, nil
@@ -181,7 +174,9 @@ func ExecuteCampaignCreation(campaign dtos.CampaignDto) (*types.Transaction, err
 	}
 
 	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
-	transaction, err := contract.CreateCampaign(auth, campaign.Owner, target, deadline)
+	creationIdStr := uuid.NewString()
+	creationId := crypto.Keccak256Hash([]byte(creationIdStr))
+	transaction, err := contract.CreateCampaign(auth, target, deadline, creationId)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err

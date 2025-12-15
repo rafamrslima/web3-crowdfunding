@@ -78,11 +78,6 @@
     "name": "createCampaign",
     "inputs": [
       {
-        "name": "_owner",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
         "name": "_target",
         "type": "uint256",
         "internalType": "uint256"
@@ -91,6 +86,11 @@
         "name": "_deadline",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "_creationId",
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [
@@ -261,6 +261,12 @@
         "type": "address",
         "indexed": true,
         "internalType": "address"
+      },
+      {
+        "name": "creationId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
       },
       {
         "name": "target",

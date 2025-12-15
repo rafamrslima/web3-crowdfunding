@@ -45,13 +45,13 @@ CREATE TABLE IF NOT EXISTS withdrawals (
 );
 
 CREATE TABLE IF NOT EXISTS tempCampaignMetadata (
+  creation_id    VARCHAR(66) NOT NULL UNIQUE,
   owner          BYTEA NOT NULL,
-  nonce          NUMERIC(78,0) NOT NULL,
   title          VARCHAR(50),
   description    VARCHAR(300),
   image          VARCHAR(50),
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-  PRIMARY KEY (owner, nonce)
+  PRIMARY KEY (creation_id)
 );
 
 CREATE TABLE IF NOT EXISTS sync_state (

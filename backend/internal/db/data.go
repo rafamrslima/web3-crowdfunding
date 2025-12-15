@@ -30,7 +30,7 @@ func connect() (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func SaveTempCampaignMetadata(address common.Address, nonce uint64, title string, description string, image string) error {
+func SaveTempCampaignMetadata(creationId string, address common.Address, title string, description string, image string) error {
 	pool, err := connect()
 	if err != nil {
 		return err
@@ -40,9 +40,9 @@ func SaveTempCampaignMetadata(address common.Address, nonce uint64, title string
 	ctx := context.Background()
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO tempCampaignMetadata (owner, nonce, title, description, image) 
+		`INSERT INTO tempCampaignMetadata (creation_id, owner, title, description, image) 
 		VALUES ($1, $2, $3, $4, $5)`,
-		address, nonce, title, description, image)
+		creationId, address, title, description, image)
 
 	if err != nil {
 		log.Println(err)
@@ -166,7 +166,9 @@ func FetchAllCampaigns() ([]dtos.CampaignDto, error) {
 	rows, err := pool.Query(ctx,
 		`SELECT c.owner, c.title, c.description, c.target_amount, c.deadline_ts, c.image, sum(d.amount) as amount_collected
 		FROM campaigns c left join donations d on c.campaign_id = d.campaign_id 
-	    GROUP BY c.owner, c.title, c.description, c.target_amount, c.deadline_ts, c.image LIMIT 100`)
+	    GROUP BY c.campaign_id, c.owner, c.title, c.description, c.target_amount, c.deadline_ts, c.image 
+		ORDER BY c.campaign_id 
+		LIMIT 100`)
 
 	if err != nil {
 		log.Println(err)
@@ -221,7 +223,7 @@ func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
 	return results, nil
 }
 
-func GetTempCampaignMetadata(owner common.Address, nonce uint64) (models.CampaignMetadata, error) {
+func GetTempCampaignMetadata(owner common.Address, creationId string) (models.CampaignMetadata, error) {
 	pool, err := connect()
 	if err != nil {
 		return models.CampaignMetadata{}, err
@@ -229,7 +231,7 @@ func GetTempCampaignMetadata(owner common.Address, nonce uint64) (models.Campaig
 	defer pool.Close()
 
 	ctx := context.Background()
-	rows, err := pool.Query(ctx, `SELECT title, description, image FROM tempCampaignMetadata WHERE owner = $1 and nonce = $2 LIMIT 1`, owner, nonce)
+	rows, err := pool.Query(ctx, `SELECT title, description, image FROM tempCampaignMetadata WHERE owner = $1 and creation_id = $2 LIMIT 1`, owner, creationId)
 
 	if err != nil {
 		return models.CampaignMetadata{}, err
