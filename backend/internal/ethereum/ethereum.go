@@ -130,7 +130,7 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 
 	contractAddr := common.HexToAddress(contractAddress)
 
-	err = db.SaveTempCampaignMetadata(creationId.Hex(), campaign.Owner, campaign.Title, campaign.Description, campaign.Image)
+	err = db.SaveCampaignDraft(creationId.Hex(), campaign.Owner, campaign.Title, campaign.Description, campaign.Image)
 
 	if err != nil {
 		return dtos.UnsignedTxResponse{}, err

@@ -30,7 +30,7 @@ func connect() (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func SaveTempCampaignMetadata(creationId string, address common.Address, title string, description string, image string) error {
+func SaveCampaignDraft(creationId string, address common.Address, title string, description string, image string) error {
 	pool, err := connect()
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func SaveTempCampaignMetadata(creationId string, address common.Address, title s
 	ctx := context.Background()
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO tempCampaignMetadata (creation_id, owner, title, description, image) 
+		`INSERT INTO campaign_drafts (creation_id, owner, title, description, image) 
 		VALUES ($1, $2, $3, $4, $5)`,
 		creationId, address, title, description, image)
 
@@ -49,7 +49,7 @@ func SaveTempCampaignMetadata(creationId string, address common.Address, title s
 		return err
 	}
 
-	log.Println("Row inserted successfully into tempCampaignMetadata.")
+	log.Println("Row inserted successfully into campaign_drafts.")
 	return nil
 }
 
@@ -223,7 +223,7 @@ func GetCampaignsByOwner(owner []byte) ([]dtos.CampaignDto, error) {
 	return results, nil
 }
 
-func GetTempCampaignMetadata(owner common.Address, creationId string) (models.CampaignMetadata, error) {
+func GetCampaignMetadataFromDraft(owner common.Address, creationId string) (models.CampaignMetadata, error) {
 	pool, err := connect()
 	if err != nil {
 		return models.CampaignMetadata{}, err
@@ -231,7 +231,7 @@ func GetTempCampaignMetadata(owner common.Address, creationId string) (models.Ca
 	defer pool.Close()
 
 	ctx := context.Background()
-	rows, err := pool.Query(ctx, `SELECT title, description, image FROM tempCampaignMetadata WHERE owner = $1 and creation_id = $2 LIMIT 1`, owner, creationId)
+	rows, err := pool.Query(ctx, `SELECT title, description, image FROM campaign_drafts WHERE owner = $1 AND creation_id = $2 LIMIT 1`, owner, creationId)
 
 	if err != nil {
 		return models.CampaignMetadata{}, err

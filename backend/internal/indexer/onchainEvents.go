@@ -153,7 +153,7 @@ func SaveCampaignCreated(client *ethclient.Client, parsedABI abi.ABI, lg types.L
 		return
 	}
 
-	campaignMetadata, err := db.GetTempCampaignMetadata(owner, creationId.Hex())
+	campaignMetadata, err := db.GetCampaignMetadataFromDraft(owner, creationId.Hex())
 	if err != nil {
 		log.Println(err)
 		return

@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS withdrawals (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS tempCampaignMetadata (
+CREATE TABLE IF NOT EXISTS campaign_drafts (
   creation_id    VARCHAR(66) NOT NULL UNIQUE,
   owner          BYTEA NOT NULL,
   title          VARCHAR(50),
