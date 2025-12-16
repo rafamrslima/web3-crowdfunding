@@ -259,7 +259,7 @@ func GetDonationsByDonor(owner []byte) ([]dtos.DonationViewDTO, error) {
 	rows, err := pool.Query(ctx,
 		`SELECT d.donor, c.campaign_id, c.title, c.description, d.created_at, c.image, d.amount
 		FROM donations d inner join campaigns c on d.campaign_id = c.campaign_id
-		WHERE d.donor = $1`, owner)
+		WHERE d.donor = $1 ORDER BY d.created_at desc`, owner)
 
 	if err != nil {
 		log.Println(err)
