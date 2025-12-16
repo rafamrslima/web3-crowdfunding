@@ -231,7 +231,8 @@ func GetCampaignMetadataFromDraft(owner common.Address, creationId string) (mode
 	defer pool.Close()
 
 	ctx := context.Background()
-	rows, err := pool.Query(ctx, `SELECT title, description, image FROM campaign_drafts WHERE owner = $1 AND creation_id = $2 LIMIT 1`, owner, creationId)
+	rows, err := pool.Query(ctx,
+		`SELECT title, description, image FROM campaign_drafts WHERE owner = $1 AND creation_id = $2 LIMIT 1`, owner, creationId)
 
 	if err != nil {
 		return models.CampaignMetadata{}, err
@@ -245,4 +246,37 @@ func GetCampaignMetadataFromDraft(owner common.Address, creationId string) (mode
 		}
 	}
 	return campaignMetadata, nil
+}
+
+func GetDonationsByDonor(owner []byte) ([]dtos.DonationViewDTO, error) {
+	pool, err := connect()
+	if err != nil {
+		return nil, err
+	}
+	defer pool.Close()
+
+	ctx := context.Background()
+	rows, err := pool.Query(ctx,
+		`SELECT d.donor, c.campaign_id, c.title, c.description, d.created_at, c.image, d.amount
+		FROM donations d inner join campaigns c on d.campaign_id = c.campaign_id
+		WHERE d.donor = $1`, owner)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []dtos.DonationViewDTO
+
+	for rows.Next() {
+		var res dtos.DonationViewDTO
+		if err := rows.Scan(
+			&res.Donor, &res.CampaignId, &res.Title, &res.Description, &res.CreatedAt, &res.Image, &res.Amount); err != nil {
+			return nil, err
+		}
+		results = append(results, res)
+	}
+
+	return results, nil
 }
