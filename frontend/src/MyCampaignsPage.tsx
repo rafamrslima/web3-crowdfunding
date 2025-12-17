@@ -189,16 +189,11 @@ export default function MyCampaignsPage() {
 
     } catch (err) {
       console.error('Withdrawal failed:', err);
-      const error = err as Error;
       
-      let errorMessage = 'Failed to withdraw funds';
-      if (error.message?.includes('User rejected') || error.message?.includes('rejected')) {
-        errorMessage = 'Transaction was rejected by user';
-      } else if (error.message?.includes('insufficient funds')) {
-        errorMessage = 'Insufficient ETH balance for transaction fees';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
+      // Import and use the raw contract error parser
+      const { getRawContractError } = await import('./contractErrors');
+      
+      const errorMessage = getRawContractError(err);
       
       setWithdrawError(prev => ({ ...prev, [campaignIndex]: errorMessage }));
     } finally {
@@ -268,7 +263,7 @@ export default function MyCampaignsPage() {
         </div>
       </div>
 
-      {campaigns.length === 0 ? (
+      {campaigns === null || campaigns.length === 0 ? (
         <div className="message-box" style={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
           <h4 className="message-title">📝 No Campaigns Created</h4>
           <p className="message-text">

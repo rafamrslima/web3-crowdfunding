@@ -226,18 +226,11 @@ export default function CampaignsPage() {
 
     } catch (err) {
       console.error("Donation failed:", err);
-      const error = err as Error;
       
-      let errorMessage = "Failed to send donation";
-      if (error.message?.includes("User rejected") || error.message?.includes("rejected")) {
-        errorMessage = "Transaction was rejected by user";
-      } else if (error.message?.includes("insufficient funds")) {
-        errorMessage = "Insufficient ETH balance for transaction fees or USDC balance for donation";
-      } else if (error.message?.includes("approve") || error.message?.includes("approval")) {
-        errorMessage = "USDC approval failed. Please try again.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
+      // Import and use the raw contract error parser
+      const { getRawContractError } = await import('./contractErrors');
+      
+      const errorMessage = getRawContractError(err);
       
       setDonationError(prev => ({ ...prev, [campaignIndex]: errorMessage }));
     } finally {
@@ -275,7 +268,7 @@ export default function CampaignsPage() {
     <div className="app-container">
       <div className="page-header">
         <h1 className="page-title">🌟 Active Campaigns</h1>
-        {campaigns.length > 0 && (
+        {campaigns !== null && campaigns.length > 0 && (
           <p className="page-subtitle">{campaigns.length} campaign{campaigns.length !== 1 ? 's' : ''} available</p>
         )}
       </div>

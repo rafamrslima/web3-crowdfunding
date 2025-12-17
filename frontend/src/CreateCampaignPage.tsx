@@ -119,16 +119,12 @@ export default function CreateCampaignPage() {
       
     } catch (err) {
       console.error("Campaign creation error:", err);
-      const error = err as Error;
       
-      // Handle specific error types
-      if (error.message?.includes("User rejected") || error.message?.includes("rejected")) {
-        setErrorMessage("Transaction was rejected by user");
-      } else if (error.message?.includes("insufficient funds")) {
-        setErrorMessage("Insufficient ETH balance for transaction fees");
-      } else {
-        setErrorMessage(error.message || "Failed to create campaign");
-      }
+      // Import and use the raw contract error parser
+      const { getRawContractError } = await import('./contractErrors');
+      
+      const errorMessage = getRawContractError(err);
+      setErrorMessage(errorMessage);
     } finally {
       setIsCreating(false);
     }
