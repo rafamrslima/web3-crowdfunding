@@ -8,12 +8,12 @@ import (
 	"web3crowdfunding/internal/ethereum"
 )
 
-func StartWithdrawController(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/v1/campaigns/withdraw/{id}", withdraw)
+func StartRefundController(mux *http.ServeMux) {
+	mux.HandleFunc("POST /api/v1/campaigns/refund/{campaignId}", refund)
 }
 
-func withdraw(w http.ResponseWriter, r *http.Request) {
-	campaignId := r.PathValue("id")
+func refund(w http.ResponseWriter, r *http.Request) {
+	campaignId := r.PathValue("campaignId")
 
 	campaignIdConverted, err := strconv.Atoi(campaignId)
 	if err != nil {
@@ -22,7 +22,7 @@ func withdraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transaction, err := ethereum.BuildWithdrawTransaction(campaignIdConverted)
+	transaction, err := ethereum.BuildRefundTransaction(campaignIdConverted)
 	if err != nil {
 		log.Println("Error when building transaction:", err)
 		w.WriteHeader(http.StatusInternalServerError)

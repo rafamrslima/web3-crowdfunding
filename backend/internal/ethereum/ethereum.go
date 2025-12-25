@@ -320,3 +320,33 @@ func BuildWithdrawTransaction(campaignId int) (dtos.UnsignedTxResponse, error) {
 
 	return unsigned, nil
 }
+
+func BuildRefundTransaction(campaignId int) (dtos.UnsignedTxResponse, error) {
+	parsedABI, err := parseContractABI()
+	if err != nil {
+		return dtos.UnsignedTxResponse{}, err
+	}
+
+	campaignIdBigInt := big.NewInt(int64(campaignId))
+	data, err := parsedABI.Pack("refundDonor", campaignIdBigInt)
+	if err != nil {
+		log.Printf("Error packing function data: %v", err)
+		return dtos.UnsignedTxResponse{}, err
+	}
+
+	contractAddress, err := GetContractAddress()
+	if err != nil {
+		return dtos.UnsignedTxResponse{}, err
+	}
+
+	contractAddr := common.HexToAddress(contractAddress)
+
+	unsigned := dtos.UnsignedTxResponse{
+		To:    contractAddr.Hex(),
+		Data:  fmt.Sprintf("0x%x", data),
+		Value: "0x0",
+		Gas:   fmt.Sprintf("0x%x", defaultGasEstimation),
+	}
+
+	return unsigned, nil
+}
