@@ -16,12 +16,12 @@ import (
 )
 
 func StartCampaignController(mux *http.ServeMux) {
-	mux.HandleFunc("/api/v1/campaigns", getAll)
-	mux.HandleFunc("/api/v1/campaigns/onchain", getAllOnChain)
-	mux.HandleFunc("/api/v1/campaigns/onchain/{id}", getById)
-	mux.HandleFunc("/api/v1/campaigns/owner/{owner}", getCampaignsByOwner)
-	mux.HandleFunc("/api/v1/campaigns/adm/create", create)
-	mux.HandleFunc("/api/v1/campaigns/create", createUnsigned)
+	mux.HandleFunc("GET /api/v1/campaigns", getAll)
+	mux.HandleFunc("GET /api/v1/campaigns/onchain", getAllOnChain)
+	mux.HandleFunc("GET /api/v1/campaigns/onchain/{id}", getById)
+	mux.HandleFunc("GET /api/v1/campaigns/owner/{owner}", getCampaignsByOwner)
+	mux.HandleFunc("POST /api/v1/campaigns/adm/create", create)
+	mux.HandleFunc("POST /api/v1/campaigns/create", createUnsigned)
 }
 
 func getAll(w http.ResponseWriter, r *http.Request) {

@@ -15,9 +15,9 @@ import (
 )
 
 func StartDonationController(mux *http.ServeMux) {
-	mux.HandleFunc("/api/v1/donations/adm/create", donate)
-	mux.HandleFunc("/api/v1/donations/create", donateUnsigned)
-	mux.HandleFunc("/api/v1/donations/{donor}", getDonationsByDonor)
+	mux.HandleFunc("POST /api/v1/donations/adm/create", donate)
+	mux.HandleFunc("POST /api/v1/donations/create", donateUnsigned)
+	mux.HandleFunc("GET /api/v1/donations/{donor}", getDonationsByDonor)
 }
 
 func donateUnsigned(w http.ResponseWriter, r *http.Request) {

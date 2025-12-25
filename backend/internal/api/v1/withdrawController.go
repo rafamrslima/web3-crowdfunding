@@ -10,7 +10,7 @@ import (
 )
 
 func StartWithdrawController(mux *http.ServeMux) {
-	mux.HandleFunc("/api/v1/campaigns/withdraw/{id}", withdraw)
+	mux.HandleFunc("POST /api/v1/campaigns/withdraw/{id}", withdraw)
 }
 
 func withdraw(w http.ResponseWriter, r *http.Request) {

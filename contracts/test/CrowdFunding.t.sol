@@ -90,7 +90,8 @@ contract CrowdFundingTest is Test {
         vm.stopPrank();
 
         // Verify campaign state updated
-        (,, , uint256 amountCollected, bool withdrawn) = crowdFunding.campaigns(campaignId);
+        (address _owner, uint256 _target, uint256 _deadline, uint256 amountCollected, bool _withdrawn) 
+            = crowdFunding.campaigns(campaignId);
         assertEq(amountCollected, donationAmount);
         assertEq(crowdFunding.contributions(campaignId, donor), donationAmount);
     }
@@ -108,7 +109,7 @@ contract CrowdFundingTest is Test {
         usdc.mint(campaignOwner, 100 * 1e6);
         vm.startPrank(campaignOwner);
         usdc.approve(address(crowdFunding), 50 * 1e6);
-        
+                
         vm.expectRevert("Owner can't donate");
         crowdFunding.donateToCampaign(campaignId, 50 * 1e6);
         vm.stopPrank();
@@ -145,7 +146,8 @@ contract CrowdFundingTest is Test {
         uint256 ownerBalanceAfter = usdc.balanceOf(campaignOwner);
         assertEq(ownerBalanceAfter, ownerBalanceBefore + 60 * 1e6);
         
-        (,,,, bool withdrawn) = crowdFunding.campaigns(campaignId);
+        (address _owner, uint256 _target, uint256 _deadline, uint256 _amountCollected, bool withdrawn) 
+            = crowdFunding.campaigns(campaignId);
         assertTrue(withdrawn);
     }
 
