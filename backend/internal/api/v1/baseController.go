@@ -13,6 +13,7 @@ func StartController() {
 	StartCampaignController(mux)
 	StartDonationController(mux)
 	StartWithdrawController(mux)
+	StartRefundController(mux)
 
 	log.Println("Server starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", WithCORS(mux)))

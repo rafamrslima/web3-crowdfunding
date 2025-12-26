@@ -115,9 +115,9 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 
 	deadline, _ := new(big.Int).SetString(campaign.Deadline, 10)
 	creationIdStr := uuid.NewString()
-	creationId := crypto.Keccak256Hash([]byte(creationIdStr))
+	creationIdHash := crypto.Keccak256Hash([]byte(creationIdStr))
 
-	data, err := parsedABI.Pack("createCampaign", target, deadline, creationId)
+	data, err := parsedABI.Pack("createCampaign", target, deadline, creationIdHash)
 	if err != nil {
 		log.Printf("Error packing function data: %v", err)
 		return dtos.UnsignedTxResponse{}, err
@@ -130,18 +130,19 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 
 	contractAddr := common.HexToAddress(contractAddress)
 
-	err = db.SaveCampaignDraft(creationId.Hex(), campaign.Owner, campaign.Title, campaign.Description, campaign.Image)
+	err = db.SaveCampaignDraft(creationIdHash.Hex(), campaign.Owner, campaign.Title, campaign.Description, campaign.Image)
 
 	if err != nil {
 		return dtos.UnsignedTxResponse{}, err
 	}
 
+	creationId := creationIdHash.Hex()
 	unsigned := dtos.UnsignedTxResponse{
 		To:         contractAddr.Hex(),
 		Data:       fmt.Sprintf("0x%x", data),
 		Value:      "0x0",
 		Gas:        fmt.Sprintf("0x%x", defaultGasEstimation),
-		CreationId: creationId.Hex(),
+		CreationId: &creationId,
 	}
 
 	return unsigned, nil
