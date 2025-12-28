@@ -280,3 +280,45 @@ func GetDonationsByDonor(owner []byte) ([]dtos.DonationViewDTO, error) {
 
 	return results, nil
 }
+
+func GetAvailableRefundsByDonor(donor []byte) ([]dtos.RefundViewDTO, error) {
+	pool, err := connect()
+	if err != nil {
+		return nil, err
+	}
+	defer pool.Close()
+
+	ctx := context.Background()
+	rows, err := pool.Query(ctx,
+		`SELECT c.campaign_id, d.donor, c.deadline_ts, c.title, c.description, 
+    sum(d.amount) as donor_total, 
+    (SELECT sum(d2.amount) FROM donations d2 WHERE d2.campaign_id = c.campaign_id) as total_collected,
+    c.target_amount, c.image
+    FROM campaigns c 
+    inner join donations d on c.campaign_id = d.campaign_id
+    WHERE c.deadline_ts < EXTRACT(EPOCH FROM now())
+    AND c.target_amount > 0
+    AND d.donor = $1
+    GROUP BY c.campaign_id, d.donor, c.deadline_ts, c.title, c.description, c.image, c.target_amount
+    HAVING (SELECT sum(d2.amount) FROM donations d2 WHERE d2.campaign_id = c.campaign_id) < c.target_amount`, donor)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []dtos.RefundViewDTO
+
+	for rows.Next() {
+		var res dtos.RefundViewDTO
+		if err := rows.Scan(
+			&res.DonationView.CampaignId, &res.DonationView.Donor, &res.CampaignDeadline, &res.DonationView.Title, &res.DonationView.Description,
+			&res.DonationView.Amount, &res.CampaignAmountCollected, &res.CampaignTarget, &res.DonationView.Image); err != nil {
+			return nil, err
+		}
+		results = append(results, res)
+	}
+
+	return results, nil
+}
