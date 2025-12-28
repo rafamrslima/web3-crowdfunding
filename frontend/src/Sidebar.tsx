@@ -80,6 +80,13 @@ export default function Sidebar({ account, onConnectWallet, onDisconnect }: Side
               💝 My Donations
             </Link>
             
+            <Link 
+              to="/refunds" 
+              className={`sidebar-link ${isActive('/refunds') ? 'active' : ''}`}
+            >
+              🔄 Refunds
+            </Link>
+            
             <button 
               onClick={onDisconnect}
               className="sidebar-button sidebar-button-danger"
