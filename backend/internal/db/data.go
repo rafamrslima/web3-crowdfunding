@@ -2,9 +2,11 @@ package db
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 	dtos "web3crowdfunding/internal/DTOs"
 	"web3crowdfunding/internal/models"
@@ -288,6 +290,12 @@ func GetAvailableRefundsByDonor(donor []byte) ([]dtos.RefundViewDTO, error) {
 	}
 	defer pool.Close()
 
+	hexStr := strings.TrimPrefix(string(donor), "0x")
+	addrBytes, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx := context.Background()
 	rows, err := pool.Query(ctx,
 		`SELECT c.campaign_id, d.donor, c.deadline_ts, c.title, c.description, 
@@ -300,7 +308,7 @@ func GetAvailableRefundsByDonor(donor []byte) ([]dtos.RefundViewDTO, error) {
     AND c.target_amount > 0
     AND d.donor = $1
     GROUP BY c.campaign_id, d.donor, c.deadline_ts, c.title, c.description, c.image, c.target_amount
-    HAVING (SELECT sum(d2.amount) FROM donations d2 WHERE d2.campaign_id = c.campaign_id) < c.target_amount`, donor)
+    HAVING (SELECT sum(d2.amount) FROM donations d2 WHERE d2.campaign_id = c.campaign_id) < c.target_amount`, addrBytes)
 
 	if err != nil {
 		log.Println(err)
@@ -313,8 +321,8 @@ func GetAvailableRefundsByDonor(donor []byte) ([]dtos.RefundViewDTO, error) {
 	for rows.Next() {
 		var res dtos.RefundViewDTO
 		if err := rows.Scan(
-			&res.DonationView.CampaignId, &res.DonationView.Donor, &res.CampaignDeadline, &res.DonationView.Title, &res.DonationView.Description,
-			&res.DonationView.Amount, &res.CampaignAmountCollected, &res.CampaignTarget, &res.DonationView.Image); err != nil {
+			&res.Donation.CampaignId, &res.Donation.Donor, &res.CampaignDeadline, &res.Donation.Title, &res.Donation.Description,
+			&res.Donation.Amount, &res.CampaignAmountCollected, &res.CampaignTarget, &res.Donation.Image); err != nil {
 			return nil, err
 		}
 		results = append(results, res)
