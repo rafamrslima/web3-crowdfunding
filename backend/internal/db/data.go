@@ -304,9 +304,11 @@ func GetAvailableRefundsByDonor(donor []byte) ([]dtos.RefundViewDTO, error) {
     c.target_amount, c.image
     FROM campaigns c 
     inner join donations d on c.campaign_id = d.campaign_id
+	left join refunds r on c.campaign_id = r.campaign_id and r.donor = d.donor
     WHERE c.deadline_ts < EXTRACT(EPOCH FROM now())
     AND c.target_amount > 0
     AND d.donor = $1
+	AND r.tx_hash IS NULL 
     GROUP BY c.campaign_id, d.donor, c.deadline_ts, c.title, c.description, c.image, c.target_amount
     HAVING (SELECT sum(d2.amount) FROM donations d2 WHERE d2.campaign_id = c.campaign_id) < c.target_amount`, addrBytes)
 

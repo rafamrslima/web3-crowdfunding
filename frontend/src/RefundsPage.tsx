@@ -243,7 +243,7 @@ export default function RefundsPage() {
         </div>
       </div>
 
-      {refunds.length === 0 ? (
+      {refunds === null || refunds.length === 0 ? (
         <div className="message-box" style={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
           <h4 className="message-title">✅ No Refunds Available</h4>
           <p className="message-text">
