@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"web3crowdfunding/internal/db"
+	"web3crowdfunding/internal/database"
 	internalEthereum "web3crowdfunding/internal/ethereum"
 	"web3crowdfunding/internal/models"
 
@@ -153,7 +153,7 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		return
 	}
 
-	campaignMetadata, err := db.GetCampaignMetadataFromDraft(owner, creationId.Hex())
+	campaignMetadata, err := database.GetCampaignMetadataFromDraft(owner, creationId.Hex())
 	if err != nil {
 		log.Println(err)
 		return
@@ -172,7 +172,7 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
-	err = db.SaveCampaignCreated(campaignDbObj)
+	err = database.SaveCampaignCreated(campaignDbObj)
 	if err != nil {
 		log.Println(err)
 		return
@@ -211,7 +211,7 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
-	err := db.SaveDonationReceived(donationDbObj)
+	err := database.SaveDonationReceived(donationDbObj)
 	if err != nil {
 		log.Println(err)
 		return
@@ -248,7 +248,7 @@ func saveWithdrawCompletion(parsedABI abi.ABI, lg types.Log) {
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
-	err := db.SaveWithdrawCompletion(withdrawDbObj)
+	err := database.SaveWithdrawCompletion(withdrawDbObj)
 	if err != nil {
 		log.Println(err)
 		return
@@ -285,7 +285,7 @@ func saveDonationRefund(parsedABI abi.ABI, lg types.Log) {
 		BlockTime:        time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
-	err := db.SaveRefundIssued(refundDbObj)
+	err := database.SaveRefundIssued(refundDbObj)
 	if err != nil {
 		log.Println(err)
 		return

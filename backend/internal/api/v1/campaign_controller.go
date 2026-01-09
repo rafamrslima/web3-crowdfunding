@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 	dtos "web3crowdfunding/internal/DTOs"
-	"web3crowdfunding/internal/db"
+	"web3crowdfunding/internal/database"
 	"web3crowdfunding/internal/ethereum"
 	"web3crowdfunding/internal/utils"
 
@@ -25,7 +25,7 @@ func StartCampaignController(mux *http.ServeMux) {
 }
 
 func getAll(w http.ResponseWriter, r *http.Request) {
-	campaigns, err := db.FetchAllCampaigns()
+	campaigns, err := database.FetchAllCampaigns()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -115,7 +115,7 @@ func getCampaignsByOwner(w http.ResponseWriter, r *http.Request) {
 
 	addr := common.HexToAddress(ownerAddress)
 	addrBytes := addr.Bytes()
-	campaigns, err := db.GetCampaignsByOwner(addrBytes)
+	campaigns, err := database.GetCampaignsByOwner(addrBytes)
 
 	if err != nil {
 		log.Println("Error:", err.Error())

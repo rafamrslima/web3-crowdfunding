@@ -55,10 +55,10 @@ CREATE TABLE IF NOT EXISTS campaign_drafts (
 );
 
 CREATE TABLE IF NOT EXISTS sync_state (
-  id         TEXT PRIMARY KEY,
-  last_block BIGINT NOT NULL
+  chain_id             BIGINT PRIMARY KEY,
+  last_processed_block BIGINT NOT NULL
 );
 
-INSERT INTO sync_state (id, last_block)
-VALUES ('crowdfunding-local', :START_BLOCK - 1)
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO sync_state (chain_id, last_processed_block)
+VALUES ('31337', 0)
+ON CONFLICT (chain_id) DO NOTHING;

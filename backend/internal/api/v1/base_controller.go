@@ -15,8 +15,8 @@ func StartController() {
 	StartWithdrawController(mux)
 	StartRefundController(mux)
 
-	log.Println("Server starting on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", WithCORS(mux)))
+	log.Println("Server starting on port 8081...")
+	log.Fatal(http.ListenAndServe(":8081", WithCORS(mux)))
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {

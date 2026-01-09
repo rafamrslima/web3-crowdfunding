@@ -9,7 +9,7 @@ import (
 	"strings"
 	crowdfunding "web3crowdfunding/contracts"
 	dtos "web3crowdfunding/internal/DTOs"
-	"web3crowdfunding/internal/db"
+	"web3crowdfunding/internal/database"
 	"web3crowdfunding/internal/utils"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -130,7 +130,7 @@ func BuildCampaignTransaction(campaign dtos.CampaignDto) (dtos.UnsignedTxRespons
 
 	contractAddr := common.HexToAddress(contractAddress)
 
-	err = db.SaveCampaignDraft(creationIdHash.Hex(), campaign.Owner, campaign.Title, campaign.Description, campaign.Image)
+	err = database.SaveCampaignDraft(creationIdHash.Hex(), campaign.Owner, campaign.Title, campaign.Description, campaign.Image)
 
 	if err != nil {
 		return dtos.UnsignedTxResponse{}, err
