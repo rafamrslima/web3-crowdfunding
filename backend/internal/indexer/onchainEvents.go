@@ -124,7 +124,7 @@ func listenToEventCreation(contractAddr common.Address, parsedABI abi.ABI, ctx c
 		case lg := <-ch:
 			switch eventName {
 			case campaignCreationEvent:
-				SaveCampaignCreated(wsClient, parsedABI, lg)
+				SaveCampaignCreated(parsedABI, lg)
 			case donationReceivedEvent:
 				saveDonationReceived(parsedABI, lg)
 			case fundsWithdrawnEvent:
@@ -138,7 +138,7 @@ func listenToEventCreation(contractAddr common.Address, parsedABI abi.ABI, ctx c
 	}
 }
 
-func SaveCampaignCreated(client *ethclient.Client, parsedABI abi.ABI, lg types.Log) {
+func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 	id := new(big.Int).SetBytes(lg.Topics[1].Bytes())
 	owner := common.BytesToAddress(lg.Topics[2].Bytes())
 	creationId := lg.Topics[3]
