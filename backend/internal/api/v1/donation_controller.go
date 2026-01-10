@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 	dtos "web3crowdfunding/internal/DTOs"
-	"web3crowdfunding/internal/database"
 	"web3crowdfunding/internal/ethereum"
+	"web3crowdfunding/internal/repositories"
 	"web3crowdfunding/internal/utils"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -92,7 +92,7 @@ func getDonationsByDonor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	addr := common.HexToAddress(donorId)
-	donations, err := database.GetDonationsByDonor(addr.Bytes())
+	donations, err := repositories.GetDonationsByDonor(addr.Bytes())
 
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {

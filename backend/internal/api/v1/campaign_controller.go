@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 	dtos "web3crowdfunding/internal/DTOs"
-	"web3crowdfunding/internal/database"
 	"web3crowdfunding/internal/ethereum"
+	"web3crowdfunding/internal/repositories"
 	"web3crowdfunding/internal/utils"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -25,7 +25,7 @@ func StartCampaignController(mux *http.ServeMux) {
 }
 
 func getAll(w http.ResponseWriter, r *http.Request) {
-	campaigns, err := database.FetchAllCampaigns()
+	campaigns, err := repositories.FetchAllCampaigns()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -115,7 +115,7 @@ func getCampaignsByOwner(w http.ResponseWriter, r *http.Request) {
 
 	addr := common.HexToAddress(ownerAddress)
 	addrBytes := addr.Bytes()
-	campaigns, err := database.GetCampaignsByOwner(addrBytes)
+	campaigns, err := repositories.GetCampaignsByOwner(addrBytes)
 
 	if err != nil {
 		log.Println("Error:", err.Error())

@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"web3crowdfunding/internal/database"
 	"web3crowdfunding/internal/ethereum"
+	"web3crowdfunding/internal/repositories"
 )
 
 func StartRefundController(mux *http.ServeMux) {
@@ -16,7 +16,7 @@ func StartRefundController(mux *http.ServeMux) {
 
 func getAvailableRefunds(w http.ResponseWriter, r *http.Request) {
 	donor := r.PathValue("donor")
-	refunds, err := database.GetAvailableRefundsByDonor([]byte(donor))
+	refunds, err := repositories.GetAvailableRefundsByDonor([]byte(donor))
 	if err != nil {
 		log.Println("Error when fetching refunds:", err)
 		w.WriteHeader(http.StatusInternalServerError)

@@ -7,14 +7,12 @@ import (
 	"log"
 	"math/big"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
-	"web3crowdfunding/internal/database"
 	internalEthereum "web3crowdfunding/internal/ethereum"
 	"web3crowdfunding/internal/models"
+	"web3crowdfunding/internal/repositories"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -40,9 +38,8 @@ func startWebSocketConnection(ctx context.Context) *ethclient.Client {
 	return wsClient
 }
 
-func StartEventListener() {
-	fmt.Println("starting listener...")
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+func StartEventListener(ctx context.Context) {
+	log.Println("starting listener...")
 
 	contractAddress, err := internalEthereum.GetContractAddress()
 	if err != nil {
@@ -92,7 +89,6 @@ func StartEventListener() {
 	}()
 
 	wg.Wait()
-	stop()
 }
 
 func listenToEventCreation(contractAddr common.Address, parsedABI abi.ABI, ctx context.Context, wsClient *ethclient.Client, eventName string) {
@@ -153,7 +149,7 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		return
 	}
 
-	campaignMetadata, err := database.GetCampaignMetadataFromDraft(owner, creationId.Hex())
+	campaignMetadata, err := repositories.GetCampaignMetadataFromDraft(owner, creationId.Hex())
 	if err != nil {
 		log.Println(err)
 		return
@@ -172,7 +168,7 @@ func SaveCampaignCreated(parsedABI abi.ABI, lg types.Log) {
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
-	err = database.SaveCampaignCreated(campaignDbObj)
+	err = repositories.SaveCampaignCreated(campaignDbObj)
 	if err != nil {
 		log.Println(err)
 		return
@@ -211,7 +207,7 @@ func saveDonationReceived(parsedABI abi.ABI, lg types.Log) {
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
-	err := database.SaveDonationReceived(donationDbObj)
+	err := repositories.SaveDonationReceived(donationDbObj)
 	if err != nil {
 		log.Println(err)
 		return
@@ -248,7 +244,7 @@ func saveWithdrawCompletion(parsedABI abi.ABI, lg types.Log) {
 		BlockTime:   time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
-	err := database.SaveWithdrawCompletion(withdrawDbObj)
+	err := repositories.SaveWithdrawCompletion(withdrawDbObj)
 	if err != nil {
 		log.Println(err)
 		return
@@ -285,7 +281,7 @@ func saveDonationRefund(parsedABI abi.ABI, lg types.Log) {
 		BlockTime:        time.Unix(int64(lg.BlockTimestamp), 0),
 	}
 
-	err := database.SaveRefundIssued(refundDbObj)
+	err := repositories.SaveRefundIssued(refundDbObj)
 	if err != nil {
 		log.Println(err)
 		return
