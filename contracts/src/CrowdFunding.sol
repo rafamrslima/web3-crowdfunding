@@ -56,6 +56,8 @@ contract CrowdFunding {
         uint256 id = numberOfCampaigns;
         Campaign storage campaign = campaigns[id];
         require(_deadline > block.timestamp, "The deadline should be a date in the future");
+        require(_deadline >= block.timestamp + 7 days, "Campaign must run for at least 7 days");
+        require(_target <= 10_000_000 * 1e6, "Target exceeds maximum allowed");
 
         campaign.owner = msg.sender;
         campaign.target = _target;
