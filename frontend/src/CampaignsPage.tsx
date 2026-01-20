@@ -12,6 +12,7 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Donation states
   const [usdcBalance, setUsdcBalance] = useState<string>('0');
@@ -239,6 +240,17 @@ export default function CampaignsPage() {
     }
   };
 
+  // Filter campaigns based on search term
+  const filteredCampaigns = campaigns.filter(campaign => {
+    if (!searchTerm.trim()) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    const titleMatch = campaign.title?.toLowerCase().includes(searchLower);
+    const descriptionMatch = campaign.description?.toLowerCase().includes(searchLower);
+    
+    return titleMatch || descriptionMatch;
+  });
+
   if (loading) {
     return (
       <div className="app-container">
@@ -269,9 +281,38 @@ export default function CampaignsPage() {
       <div className="page-header">
         <h1 className="page-title">🌟 Active Campaigns</h1>
         {campaigns !== null && campaigns.length > 0 && (
-          <p className="page-subtitle">{campaigns.length} campaign{campaigns.length !== 1 ? 's' : ''} available</p>
+          <p className="page-subtitle">
+            {filteredCampaigns.length} of {campaigns.length} campaign{campaigns.length !== 1 ? 's' : ''} 
+            {searchTerm.trim() && filteredCampaigns.length !== campaigns.length ? ' match your search' : ' available'}
+          </p>
         )}
       </div>
+
+      {/* Search/Filter Input */}
+      {campaigns !== null && campaigns.length > 0 && (
+        <div style={{ marginBottom: '2rem' }}>
+          <div className="form-group">
+            <label className="form-label">🔍 Search Campaigns</label>
+            <input
+              type="text"
+              placeholder="Search by title or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="form-input"
+              style={{ maxWidth: '600px' }}
+            />
+            {searchTerm.trim() && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                className="btn btn-secondary"
+                style={{ marginLeft: '0.5rem', padding: '0.5rem 1rem' }}
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {campaigns === null || campaigns.length === 0 ? (
         <div className="message-box message-error">
@@ -283,10 +324,27 @@ export default function CampaignsPage() {
             Create First Campaign
           </Link>
         </div>
+      ) : filteredCampaigns.length === 0 ? (
+        <div className="message-box" style={{ backgroundColor: '#fff3cd', border: '1px solid #ffc107' }}>
+          <h4 className="message-title">🔍 No campaigns match your search</h4>
+          <p className="message-text">
+            Try adjusting your search term or clear the filter to see all campaigns.
+          </p>
+          <button 
+            onClick={() => setSearchTerm('')}
+            className="btn btn-primary"
+            style={{ marginTop: '1rem' }}
+          >
+            Clear Search
+          </button>
+        </div>
       ) : (
         <div className="campaigns-grid">
-          {campaigns.map((campaign, index) => (
-            <div key={index} className="campaign-card">
+          {filteredCampaigns.map((campaign) => {
+            // Find the original index from the campaigns array
+            const originalIndex = campaigns.indexOf(campaign);
+            return (
+            <div key={originalIndex} className="campaign-card">
               <div className="campaign-header">
                 {campaign.image && campaign.image.trim() !== '' && (
                   <img 
@@ -300,7 +358,7 @@ export default function CampaignsPage() {
                   />
                 )}
                 <div className="campaign-title-section">
-                  <div className="campaign-id">#{index}</div>
+                  <div className="campaign-id">#{originalIndex}</div>
                   <h3 className="campaign-title">
                     {campaign.title && campaign.title.trim() !== '' ? campaign.title : 'Untitled Campaign'}
                   </h3>
@@ -352,17 +410,17 @@ export default function CampaignsPage() {
               <div className="campaign-actions">
                 <button 
                   className={`btn ${!account ? 'btn-secondary' : 'btn-primary'}`}
-                  onClick={() => toggleDonationForm(index)}
-                  disabled={!account || donationLoading[index] || approvalLoading[index]}
+                  onClick={() => toggleDonationForm(originalIndex)}
+                  disabled={!account || donationLoading[originalIndex] || approvalLoading[originalIndex]}
                   title={!account ? 'Please connect your wallet to donate' : ''}
                 >
-                  {(donationLoading[index] || approvalLoading[index]) && <span className="loading-spinner"></span>}
-                  {!account ? "🔒 Connect Wallet to Donate" : (expandedDonation === index ? "❌ Cancel" : "💝 Donate")}
+                  {(donationLoading[originalIndex] || approvalLoading[originalIndex]) && <span className="loading-spinner"></span>}
+                  {!account ? "🔒 Connect Wallet to Donate" : (expandedDonation === originalIndex ? "❌ Cancel" : "💝 Donate")}
                 </button>
               </div>
 
               {/* Donation Form - Expandable */}
-              {expandedDonation === index && (
+              {expandedDonation === originalIndex && (
                 <div className="donation-form">
                   <h4>💰 Donate to this Campaign</h4>
                   
@@ -386,12 +444,12 @@ export default function CampaignsPage() {
                     <input
                       type="text"
                       placeholder="Enter USDC amount (e.g., 10.5 or 50)"
-                      value={donationAmounts[index] || ""}
+                      value={donationAmounts[originalIndex] || ""}
                       onChange={(e) => {
                         // Only allow numbers, dots, and basic validation
                         const value = e.target.value;
                         if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                          updateDonationAmount(index, value);
+                          updateDonationAmount(originalIndex, value);
                         }
                       }}
                       className="form-input"
@@ -400,17 +458,17 @@ export default function CampaignsPage() {
                   
                   <div className="donation-actions">
                     <button 
-                      onClick={() => sendDonation(index)}
-                      disabled={donationLoading[index] || approvalLoading[index] || !donationAmounts[index]}
-                      className={`btn ${donationLoading[index] || approvalLoading[index] ? 'btn-secondary' : 'btn-success'}`}
+                      onClick={() => sendDonation(originalIndex)}
+                      disabled={donationLoading[originalIndex] || approvalLoading[originalIndex] || !donationAmounts[originalIndex]}
+                      className={`btn ${donationLoading[originalIndex] || approvalLoading[originalIndex] ? 'btn-secondary' : 'btn-success'}`}
                     >
-                      {(donationLoading[index] || approvalLoading[index]) && <span className="loading-spinner"></span>}
-                      {approvalLoading[index] ? '📝 Approving USDC...' : donationLoading[index] ? '💸 Processing Donation...' : '🚀 Send Donation'}
+                      {(donationLoading[originalIndex] || approvalLoading[originalIndex]) && <span className="loading-spinner"></span>}
+                      {approvalLoading[originalIndex] ? '📝 Approving USDC...' : donationLoading[originalIndex] ? '💸 Processing Donation...' : '🚀 Send Donation'}
                     </button>
                   </div>
 
                   {/* Approval Info */}
-                  {approvalLoading[index] && (
+                  {approvalLoading[originalIndex] && (
                     <div className="message-box" style={{ backgroundColor: '#e3f2fd', border: '1px solid #2196f3', marginTop: '1rem' }}>
                       <h4 style={{ color: '#1976d2', margin: '0 0 0.5rem 0' }}>🔐 USDC Approval Required</h4>
                       <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
@@ -420,28 +478,29 @@ export default function CampaignsPage() {
                   )}
 
                   {/* Success Message */}
-                  {donationSuccess[index] && (
+                  {donationSuccess[originalIndex] && (
                     <div className="message-box message-success">
                       <h4 className="message-title">✅ Donation Sent Successfully!</h4>
                       <p className="message-text">Your donation has been sent to the blockchain.</p>
                       <p className="message-text">
                         <strong>Transaction ID:</strong>
-                        <code className="transaction-hash">{donationSuccess[index]}</code>
+                        <code className="transaction-hash">{donationSuccess[originalIndex]}</code>
                       </p>
                     </div>
                   )}
 
                   {/* Error Message */}
-                  {donationError[index] && (
+                  {donationError[originalIndex] && (
                     <div className="message-box message-error">
                       <h4 className="message-title">❌ Donation Failed</h4>
-                      <p className="message-text">{donationError[index]}</p>
+                      <p className="message-text">{donationError[originalIndex]}</p>
                     </div>
                   )}
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
