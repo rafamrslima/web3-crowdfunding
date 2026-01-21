@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -21,7 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-const ethClientAddress = "//127.0.0.1:8545"
+const ethWsClientAddress = "ws://127.0.0.1:8545"
 const defaultABIPath = "contracts/crowdfunding.abi"
 const campaignCreationEvent = "CampaignCreated"
 const donationReceivedEvent = "DonationReceived"
@@ -29,9 +30,7 @@ const fundsWithdrawnEvent = "FundsWithdrawn"
 const donationRefundedEvent = "DonationRefunded"
 
 func startWebSocketConnection(ctx context.Context) *ethclient.Client {
-	wsURL := "ws:" + ethClientAddress
-
-	wsClient, err := ethclient.DialContext(ctx, wsURL)
+	wsClient, err := ethclient.DialContext(ctx, ethWsClientAddress)
 	if err != nil {
 		log.Fatal("websocket dial:", err)
 	}
@@ -40,6 +39,19 @@ func startWebSocketConnection(ctx context.Context) *ethclient.Client {
 
 func StartEventListener(ctx context.Context) {
 	log.Println("starting listener...")
+
+	chainIDStr := os.Getenv("CHAIN_ID")
+	chainID, err := strconv.ParseInt(chainIDStr, 10, 64)
+	if err != nil {
+		log.Printf("Invalid CHAIN_ID: %v", err)
+	}
+
+	lastBlock, err := repositories.GetLastProcessedBlock(chainID)
+	if err != nil {
+		log.Printf("Warning: Failed to get last processed block: %v", err)
+	} else {
+		log.Printf("Last processed block: %d", lastBlock)
+	}
 
 	contractAddress, err := internalEthereum.GetContractAddress()
 	if err != nil {
@@ -129,6 +141,16 @@ func listenToEventCreation(contractAddr common.Address, parsedABI abi.ABI, ctx c
 				saveDonationRefund(parsedABI, lg)
 			default:
 				log.Println("event not found.")
+			}
+
+			chainIDStr := os.Getenv("CHAIN_ID")
+			chainID, err := strconv.ParseInt(chainIDStr, 10, 64)
+			if err != nil {
+				log.Printf("Invalid CHAIN_ID: %v", err)
+			} else {
+				if err := repositories.UpdateLastProcessedBlock(chainID, lg.BlockNumber); err != nil {
+					log.Printf("Warning: Failed to update sync state to block %d: %v", lg.BlockNumber, err)
+				}
 			}
 		}
 	}
