@@ -20,6 +20,7 @@ func NewServer(addr string) *Server {
 	StartDonationController(mux)
 	StartWithdrawController(mux)
 	StartRefundController(mux)
+	StartCategoriesController(mux)
 
 	return &Server{
 		httpServer: &http.Server{

@@ -11,5 +11,6 @@ type CampaignDto struct {
 	Target          string         `json:"target"`
 	Deadline        string         `json:"deadline"`
 	Image           string         `json:"image"`
+	CategoryId      *int32         `json:"categoryId,omitempty"`
 	AmountCollected *uint64        `json:"amountCollected"`
 }

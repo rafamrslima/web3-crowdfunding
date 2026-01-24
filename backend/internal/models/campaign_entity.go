@@ -14,6 +14,7 @@ type CampaignDbEntity struct {
 	Target      int64
 	Deadline    uint64
 	Image       string
+	CategoryId  *int32
 	TxHash      common.Hash
 	BlockNumber uint64
 	BlockTime   time.Time
