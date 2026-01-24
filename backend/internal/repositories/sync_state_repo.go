@@ -56,22 +56,3 @@ func UpdateLastProcessedBlock(chainID int64, blockNumber uint64) error {
 	log.Printf("Updated sync_state for chain %d to block %d", chainID, blockNumber)
 	return nil
 }
-
-// This allows atomic updates with event processing
-func UpdateLastProcessedBlockTx(tx pgx.Tx, chainID int64, blockNumber uint64) error {
-	ctx := context.Background()
-
-	_, err := tx.Exec(ctx,
-		`INSERT INTO sync_state (chain_id, last_processed_block) 
-		VALUES ($1, $2)
-		ON CONFLICT (chain_id) 
-		DO UPDATE SET last_processed_block = $2`,
-		chainID, blockNumber)
-
-	if err != nil {
-		log.Printf("Error updating sync_state in transaction: %v", err)
-		return err
-	}
-
-	return nil
-}
