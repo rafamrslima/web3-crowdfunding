@@ -4,6 +4,7 @@ import type { Hex } from "viem";
 
 import { API_BASE } from "./config";
 import { useWallet } from "./WalletContext";
+import { useCategories } from "./hooks/useCategories";
 import "./App.css";
 
 function toUnixSeconds(dateStr: string): string {
@@ -13,6 +14,7 @@ function toUnixSeconds(dateStr: string): string {
 
 export default function CreateCampaignPage() {
   const { account, walletClient, connectWallet } = useWallet();
+  const { categories, loading: categoriesLoading } = useCategories();
   // Defaults (editable in the UI)
   const [owner, setOwner] = useState<string>(() => account || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
   const [ownerManuallyEdited, setOwnerManuallyEdited] = useState(false);
@@ -24,6 +26,7 @@ export default function CreateCampaignPage() {
   const defaultDeadlineISO = new Date(1794268800 * 1000).toISOString().slice(0, 10);
   const [deadlineDate, setDeadlineDate] = useState(defaultDeadlineISO);
   const [image, setImage] = useState("");
+  const [categoryId, setCategoryId] = useState<number | null>(null);
 
   // UI state management
   const [isCreating, setIsCreating] = useState(false);
@@ -79,7 +82,8 @@ export default function CreateCampaignPage() {
         description: description,
         target: targetUsdc,                 // USDC (string) - e.g. "10.5" = $10.50, "1500" = $1500
         deadline: deadlineSec.toString(),   // unix seconds (string)
-        image: image || ""                  // keep as empty string if not provided
+        image: image || "",                 // keep as empty string if not provided
+        categoryId: categoryId              // nullable number
       };
 
       console.log("Creating campaign transaction...");
@@ -225,6 +229,35 @@ export default function CreateCampaignPage() {
               onChange={(e) => setDeadlineDate(e.target.value)}
               className="form-input"
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Category (optional)</label>
+            {categoriesLoading ? (
+              <div style={{ padding: '0.75rem', color: '#666' }}>Loading categories...</div>
+            ) : (
+              <select
+                value={categoryId || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setCategoryId(value === "" ? null : parseInt(value));
+                  clearMessages();
+                }}
+                className="form-input"
+              >
+                <option value="">-- No category --</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {categoryId && categories.find(c => c.id === categoryId) && (
+              <small style={{ display: 'block', marginTop: '0.25rem', color: '#666' }}>
+                {categories.find(c => c.id === categoryId)?.description}
+              </small>
+            )}
           </div>
 
           <div className="form-group">

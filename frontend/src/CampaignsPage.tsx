@@ -5,14 +5,17 @@ import { API_BASE } from './config';
 import type { Campaign, UnsignedTransaction } from './types';
 import { approveUSDC, getUSDCBalance, needsApproval } from './utils/usdcApproval';
 import { useWallet } from './WalletContext';
+import { useCategories } from './hooks/useCategories';
 import './App.css';
 
 export default function CampaignsPage() {
   const { account, walletClient } = useWallet();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
 
   // Donation states
   const [usdcBalance, setUsdcBalance] = useState<string>('0');
@@ -240,8 +243,14 @@ export default function CampaignsPage() {
     }
   };
 
-  // Filter campaigns based on search term
+  // Filter campaigns based on search term and category
   const filteredCampaigns = campaigns.filter(campaign => {
+    // Category filter
+    if (categoryFilter !== null && campaign.categoryId !== categoryFilter) {
+      return false;
+    }
+    
+    // Search filter
     if (!searchTerm.trim()) return true;
     
     const searchLower = searchTerm.toLowerCase();
@@ -283,14 +292,53 @@ export default function CampaignsPage() {
         {campaigns !== null && campaigns.length > 0 && (
           <p className="page-subtitle">
             {filteredCampaigns.length} of {campaigns.length} campaign{campaigns.length !== 1 ? 's' : ''} 
-            {searchTerm.trim() && filteredCampaigns.length !== campaigns.length ? ' match your search' : ' available'}
+            {(searchTerm.trim() || categoryFilter !== null) && filteredCampaigns.length !== campaigns.length ? ' match your filters' : ' available'}
           </p>
         )}
       </div>
 
-      {/* Search/Filter Input */}
+      {/* Filter Controls */}
       {campaigns !== null && campaigns.length > 0 && (
         <div style={{ marginBottom: '2rem' }}>
+          {/* Category Filter */}
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label className="form-label">📂 Filter by Category</label>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {categoriesLoading ? (
+                <div style={{ padding: '0.5rem', color: '#666' }}>Loading categories...</div>
+              ) : (
+                <>
+                  <select
+                    value={categoryFilter || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCategoryFilter(value === "" ? null : parseInt(value));
+                    }}
+                    className="form-input"
+                    style={{ maxWidth: '600px' }}
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  {categoryFilter !== null && (
+                    <button 
+                      onClick={() => setCategoryFilter(null)}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.5rem 1rem' }}
+                    >
+                      ✕ Clear
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Search Input */}
           <div className="form-group">
             <label className="form-label">🔍 Search Campaigns</label>
             <input
@@ -326,17 +374,22 @@ export default function CampaignsPage() {
         </div>
       ) : filteredCampaigns.length === 0 ? (
         <div className="message-box" style={{ backgroundColor: '#fff3cd', border: '1px solid #ffc107' }}>
-          <h4 className="message-title">🔍 No campaigns match your search</h4>
+          <h4 className="message-title">🔍 No campaigns match your filters</h4>
           <p className="message-text">
-            Try adjusting your search term or clear the filter to see all campaigns.
+            Try adjusting your search term or category filter to see more campaigns.
           </p>
-          <button 
-            onClick={() => setSearchTerm('')}
-            className="btn btn-primary"
-            style={{ marginTop: '1rem' }}
-          >
-            Clear Search
-          </button>
+          {(searchTerm.trim() || categoryFilter !== null) && (
+            <button 
+              onClick={() => {
+                setSearchTerm('');
+                setCategoryFilter(null);
+              }}
+              className="btn btn-primary"
+              style={{ marginTop: '1rem' }}
+            >
+              Clear All Filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="campaigns-grid">
@@ -358,7 +411,21 @@ export default function CampaignsPage() {
                   />
                 )}
                 <div className="campaign-title-section">
-                  <div className="campaign-id">#{originalIndex}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div className="campaign-id">#{originalIndex}</div>
+                    {campaign.categoryId && categories.find(c => c.id === campaign.categoryId) && (
+                      <span style={{
+                        fontSize: '0.75rem',
+                        padding: '0.25rem 0.5rem',
+                        backgroundColor: 'var(--primary-color)',
+                        color: 'white',
+                        borderRadius: '12px',
+                        fontWeight: '500'
+                      }}>
+                        {categories.find(c => c.id === campaign.categoryId)?.name}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="campaign-title">
                     {campaign.title && campaign.title.trim() !== '' ? campaign.title : 'Untitled Campaign'}
                   </h3>
