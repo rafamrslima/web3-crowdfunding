@@ -12,7 +12,7 @@ func GetCampaignsTotal() (uint64, error) {
 		return 0, err
 	}
 
-	total, err := contract.GetCampaingsTotal(&bind.CallOpts{})
+	total, err := contract.GetCampaignsTotal(&bind.CallOpts{})
 	if err != nil {
 		log.Printf("error: %v", err)
 		return 0, err
