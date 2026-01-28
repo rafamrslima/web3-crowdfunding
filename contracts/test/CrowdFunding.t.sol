@@ -109,7 +109,7 @@ contract CrowdFundingTest is Test {
         usdc.mint(campaignOwner, 100 * 1e6);
         vm.startPrank(campaignOwner);
         usdc.approve(address(crowdFunding), 50 * 1e6);
-                
+
         vm.expectRevert("Owner can't donate");
         crowdFunding.donateToCampaign(campaignId, 50 * 1e6);
         vm.stopPrank();
@@ -228,21 +228,15 @@ contract CrowdFundingTest is Test {
         assertEq(donations[1], 20 * 1e6);
     }
 
-    function test_GetCampaigns() public {
+    function test_GetCampaignsTotal() public {
         // Create multiple campaigns
         vm.startPrank(campaignOwner);
         crowdFunding.createCampaign(100 * 1e6, block.timestamp + 30 days, keccak256("campaign1"));
         crowdFunding.createCampaign(200 * 1e6, block.timestamp + 60 days, keccak256("campaign2"));
         vm.stopPrank();
 
-        // Get all campaigns
-        CrowdFunding.Campaign[] memory campaigns = crowdFunding.getCampaigns();
-        
-        assertEq(campaigns.length, 2);
-        assertEq(campaigns[0].target, 100 * 1e6);
-        assertEq(campaigns[1].target, 200 * 1e6);
-        assertEq(campaigns[0].owner, campaignOwner);
-        assertEq(campaigns[1].owner, campaignOwner);
+        uint256 total = crowdFunding.getCampaingsTotal();
+        assertEq(total, 2);
     }
 
     function test_CreateCampaign_FailsWithPastDeadline() public {

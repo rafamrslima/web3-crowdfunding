@@ -71,22 +71,22 @@ contract CrowdFunding {
         return id;
     }
 
-    function donateToCampaign(uint256 _id, uint256 amount) external {
+    function donateToCampaign(uint256 _id, uint256 _amount) external {
         require(_id < numberOfCampaigns, "Campaign does not exist");
         Campaign storage campaign = campaigns[_id];
         require(block.timestamp < campaign.deadline, "Campaign has ended");
-        require(amount > 0, "Invalid amount");
+        require(_amount > 0, "Invalid amount");
         require(campaign.owner != msg.sender, "Owner can't donate");
 
-        bool ok = usdc.transferFrom(msg.sender, address(this), amount);
+        bool ok = usdc.transferFrom(msg.sender, address(this), _amount);
         require(ok, "USDC transfer failed");
 
-        campaign.donations.push(amount);
+        campaign.donations.push(_amount);
         campaign.donators.push(msg.sender);
-        campaign.amountCollected += amount;
-        contributions[_id][msg.sender] += amount;
+        campaign.amountCollected += _amount;
+        contributions[_id][msg.sender] += _amount;
 
-        emit DonationReceived(_id, msg.sender, amount);
+        emit DonationReceived(_id, msg.sender, _amount);
     }
 
     function withdraw(uint256 _idCampaign) external {
@@ -125,14 +125,7 @@ contract CrowdFunding {
         return (campaign.donators, campaign.donations);
     }
 
-    function getCampaigns() public view returns (Campaign[] memory) {
-        Campaign[] memory allCampaigns = new Campaign[](numberOfCampaigns);
-
-        for (uint256 i = 0; i < numberOfCampaigns; i++) {
-            Campaign storage item = campaigns[i];
-            allCampaigns[i] = item;
-        }
-
-        return allCampaigns;
+    function getCampaingsTotal() public view returns (uint256 total) {
+        return numberOfCampaigns;
     }
 }
