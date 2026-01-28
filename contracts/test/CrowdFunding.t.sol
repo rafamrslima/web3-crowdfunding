@@ -195,39 +195,6 @@ contract CrowdFundingTest is Test {
         crowdFunding.withdraw(campaignId);
     }
 
-    function test_GetDonators() public {
-        vm.prank(campaignOwner);
-        uint256 campaignId = crowdFunding.createCampaign(
-            100 * 1e6,
-            block.timestamp + 30 days,
-            keccak256(abi.encodePacked("get_donators_test"))
-        );
-
-        address donor2 = makeAddr("donor2");
-        usdc.mint(donor2, 1000 * 1e6);
-
-        // Multiple donations
-        vm.startPrank(donor);
-        usdc.approve(address(crowdFunding), 30 * 1e6);
-        crowdFunding.donateToCampaign(campaignId, 30 * 1e6);
-        vm.stopPrank();
-
-        vm.startPrank(donor2);
-        usdc.approve(address(crowdFunding), 20 * 1e6);
-        crowdFunding.donateToCampaign(campaignId, 20 * 1e6);
-        vm.stopPrank();
-
-        // Get donators and donations
-        (address[] memory donators, uint256[] memory donations) = crowdFunding.getDonators(campaignId);
-        
-        assertEq(donators.length, 2);
-        assertEq(donations.length, 2);
-        assertEq(donators[0], donor);
-        assertEq(donators[1], donor2);
-        assertEq(donations[0], 30 * 1e6);
-        assertEq(donations[1], 20 * 1e6);
-    }
-
     function test_GetCampaignsTotal() public {
         // Create multiple campaigns
         vm.startPrank(campaignOwner);
@@ -235,7 +202,7 @@ contract CrowdFundingTest is Test {
         crowdFunding.createCampaign(200 * 1e6, block.timestamp + 60 days, keccak256("campaign2"));
         vm.stopPrank();
 
-        uint256 total = crowdFunding.getCampaingsTotal();
+        uint256 total = crowdFunding.getCampaignsTotal();
         assertEq(total, 2);
     }
 

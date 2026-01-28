@@ -17,8 +17,6 @@ contract CrowdFunding {
         uint256 target;
         uint256 deadline;
         uint256 amountCollected;
-        address[] donators;
-        uint256[] donations;
         bool withdrawn;
     }
 
@@ -49,7 +47,7 @@ contract CrowdFunding {
     );
 
     mapping(uint256 => Campaign) public campaigns;
-    mapping(uint256 => mapping(address => uint256)) public contributions;
+    mapping(uint256 => mapping(address => uint256)) public contributions; //campaignId -> (donator -> amount)
     uint256 public numberOfCampaigns = 0;
 
     function createCampaign(uint256 _target, uint256 _deadline, bytes32 _creationId) public returns (uint256) {
@@ -80,9 +78,6 @@ contract CrowdFunding {
 
         bool ok = usdc.transferFrom(msg.sender, address(this), _amount);
         require(ok, "USDC transfer failed");
-
-        campaign.donations.push(_amount);
-        campaign.donators.push(msg.sender);
         campaign.amountCollected += _amount;
         contributions[_id][msg.sender] += _amount;
 
@@ -120,12 +115,7 @@ contract CrowdFunding {
         emit DonationRefunded(_idCampaign, msg.sender, totalContributed);
     }
 
-    function getDonators(uint256 _id) public view returns (address[] memory, uint256[] memory) {
-        Campaign storage campaign = campaigns[_id];
-        return (campaign.donators, campaign.donations);
-    }
-
-    function getCampaingsTotal() public view returns (uint256 total) {
+    function getCampaignsTotal() public view returns (uint256 total) {
         return numberOfCampaigns;
     }
 }
