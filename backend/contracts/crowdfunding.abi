@@ -112,7 +112,7 @@
         "internalType": "uint256"
       },
       {
-        "name": "amount",
+        "name": "_amount",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -122,50 +122,13 @@
   },
   {
     "type": "function",
-    "name": "getCampaigns",
+    "name": "getCampaingsTotal",
     "inputs": [],
     "outputs": [
       {
-        "name": "",
-        "type": "tuple[]",
-        "internalType": "struct CrowdFunding.Campaign[]",
-        "components": [
-          {
-            "name": "owner",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "target",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "deadline",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "amountCollected",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "donators",
-            "type": "address[]",
-            "internalType": "address[]"
-          },
-          {
-            "name": "donations",
-            "type": "uint256[]",
-            "internalType": "uint256[]"
-          },
-          {
-            "name": "withdrawn",
-            "type": "bool",
-            "internalType": "bool"
-          }
-        ]
+        "name": "total",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"

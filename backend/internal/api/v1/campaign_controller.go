@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 	dtos "web3crowdfunding/internal/DTOs"
 	"web3crowdfunding/internal/ethereum"
 	"web3crowdfunding/internal/repositories"
@@ -17,8 +15,7 @@ import (
 
 func StartCampaignController(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/campaigns", getAll)
-	mux.HandleFunc("GET /api/v1/campaigns/onchain", getAllOnChain)
-	mux.HandleFunc("GET /api/v1/campaigns/onchain/{id}", getById)
+	mux.HandleFunc("GET /api/v1/campaigns/onchain/total", GetCampaignsTotal)
 	mux.HandleFunc("GET /api/v1/campaigns/owner/{owner}", getCampaignsByOwner)
 	mux.HandleFunc("POST /api/v1/campaigns/adm/create", create)
 	mux.HandleFunc("POST /api/v1/campaigns/create", createUnsigned)
@@ -45,53 +42,15 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getAllOnChain(w http.ResponseWriter, r *http.Request) {
-	campaigns, err := ethereum.FetchAllCampaigns()
+func GetCampaignsTotal(w http.ResponseWriter, r *http.Request) {
+	total, err := ethereum.GetCampaignsTotal()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	data, err := json.Marshal(campaigns)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		fmt.Println("Error writing response:", err)
-		return
-	}
-}
-
-func getById(w http.ResponseWriter, r *http.Request) {
-	campaignId := r.PathValue("id")
-
-	if campaignId == "" {
-		campaignId = "0"
-	}
-
-	campaignIdConverted, err := strconv.Atoi(campaignId)
-	if err != nil {
-		log.Println("Bad request:", campaignId)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	campaigns, err := ethereum.FetchCampaignById(campaignIdConverted)
-
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	data, err := json.Marshal(campaigns)
+	data, err := json.Marshal(total)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
