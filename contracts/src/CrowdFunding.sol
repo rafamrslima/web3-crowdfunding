@@ -2,8 +2,9 @@
 pragma solidity ^0.8.13;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract CrowdFunding {
+contract CrowdFunding is ReentrancyGuard {
 
     IERC20 public usdc;
 
@@ -84,7 +85,7 @@ contract CrowdFunding {
         emit DonationReceived(_id, msg.sender, _amount);
     }
 
-    function withdraw(uint256 _idCampaign) external {
+    function withdraw(uint256 _idCampaign) external nonReentrant {
         require(_idCampaign < numberOfCampaigns, "Campaign does not exist");
         Campaign storage campaign = campaigns[_idCampaign];
         require(block.timestamp > campaign.deadline, "Campaign is still ongoing");
@@ -99,7 +100,7 @@ contract CrowdFunding {
         emit FundsWithdrawn(_idCampaign, campaign.owner, campaign.amountCollected);
     }
 
-    function refundDonor(uint256 _idCampaign) public {
+    function refundDonor(uint256 _idCampaign) public nonReentrant {
         require(_idCampaign < numberOfCampaigns, "Campaign does not exist");
         Campaign storage campaign = campaigns[_idCampaign];
         require(campaign.deadline < block.timestamp, "Campaign is not ended yet");
@@ -109,6 +110,7 @@ contract CrowdFunding {
         require(totalContributed > 0, "No donation found");
 
         contributions[_idCampaign][msg.sender] = 0;
+        campaign.amountCollected -= totalContributed;
 
         bool ok = usdc.transfer(msg.sender, totalContributed);
         require(ok, "Refund failed");
