@@ -52,11 +52,13 @@ contract CrowdFunding is ReentrancyGuard {
     uint256 public numberOfCampaigns = 0;
 
     function createCampaign(uint256 _target, uint256 _deadline, bytes32 _creationId) public returns (uint256) {
-        uint256 id = numberOfCampaigns;
-        Campaign storage campaign = campaigns[id];
+        require(_target > 0, "Target must be greater than zero");
+        require(_target <= 10_000_000 * 1e6, "Target exceeds maximum allowed");
         require(_deadline > block.timestamp, "The deadline should be a date in the future");
         require(_deadline >= block.timestamp + 7 days, "Campaign must run for at least 7 days");
-        require(_target <= 10_000_000 * 1e6, "Target exceeds maximum allowed");
+
+        uint256 id = numberOfCampaigns;
+        Campaign storage campaign = campaigns[id];
 
         campaign.owner = msg.sender;
         campaign.target = _target;
