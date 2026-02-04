@@ -23,7 +23,7 @@ func GetContractAddress() (string, error) {
 }
 
 func connectToEthereumNode() (*ethclient.Client, error) {
-	ethClient, err := ethclient.Dial(ethClientAddress)
+	ethClient, err := ethclient.Dial(getEthClientAddress())
 	if err != nil {
 		log.Printf("Error connecting to Ethereum client: %v", err)
 		return nil, err

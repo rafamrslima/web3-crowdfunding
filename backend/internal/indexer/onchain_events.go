@@ -22,15 +22,22 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-const ethWsClientAddress = "ws://127.0.0.1:8545"
 const defaultABIPath = "contracts/crowdfunding.abi"
+
+func getEthWsClientAddress() string {
+	if addr := os.Getenv("ETH_WS_URL"); addr != "" {
+		return addr
+	}
+	return "ws://127.0.0.1:8545" // fallback to local
+}
+
 const campaignCreationEvent = "CampaignCreated"
 const donationReceivedEvent = "DonationReceived"
 const fundsWithdrawnEvent = "FundsWithdrawn"
 const donationRefundedEvent = "DonationRefunded"
 
 func startWebSocketConnection(ctx context.Context) *ethclient.Client {
-	wsClient, err := ethclient.DialContext(ctx, ethWsClientAddress)
+	wsClient, err := ethclient.DialContext(ctx, getEthWsClientAddress())
 	if err != nil {
 		log.Fatal("websocket dial:", err)
 	}
