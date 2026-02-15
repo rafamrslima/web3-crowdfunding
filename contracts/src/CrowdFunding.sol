@@ -2,9 +2,11 @@
 pragma solidity ^0.8.13;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract CrowdFunding is ReentrancyGuard {
+    using SafeERC20 for IERC20;
 
     IERC20 public usdc;
 
@@ -79,8 +81,7 @@ contract CrowdFunding is ReentrancyGuard {
         require(_amount > 0, "Invalid amount");
         require(campaign.owner != msg.sender, "Owner can't donate");
 
-        bool ok = usdc.transferFrom(msg.sender, address(this), _amount);
-        require(ok, "USDC transfer failed");
+        usdc.safeTransferFrom(msg.sender, address(this), _amount);
         campaign.amountCollected += _amount;
         contributions[_id][msg.sender] += _amount;
 
@@ -96,8 +97,7 @@ contract CrowdFunding is ReentrancyGuard {
         require(!campaign.withdrawn, "Withdraw already done.");
 
         campaign.withdrawn = true;
-        bool ok = usdc.transfer(campaign.owner, campaign.amountCollected);
-        require(ok, "Transfer failed.");
+        usdc.safeTransfer(campaign.owner, campaign.amountCollected);
         
         emit FundsWithdrawn(_idCampaign, campaign.owner, campaign.amountCollected);
     }
@@ -114,8 +114,7 @@ contract CrowdFunding is ReentrancyGuard {
         contributions[_idCampaign][msg.sender] = 0;
         campaign.amountCollected -= totalContributed;
 
-        bool ok = usdc.transfer(msg.sender, totalContributed);
-        require(ok, "Refund failed");
+        usdc.safeTransfer(msg.sender, totalContributed);
         emit DonationRefunded(_idCampaign, msg.sender, totalContributed);
     }
 
