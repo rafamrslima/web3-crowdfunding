@@ -38,7 +38,7 @@ contract CrowdFundingTest is Test {
         vm.prank(campaignOwner);
         uint256 campaignId = crowdFunding.createCampaign(
             1000 * 1e6, // 1000 USDC target (high target to ensure goal not reached)
-            block.timestamp + 1 days,
+            block.timestamp + 8 days,
             keccak256(abi.encodePacked("refund_test"))
         );
 
@@ -50,7 +50,7 @@ contract CrowdFundingTest is Test {
         vm.stopPrank();
 
         // Fast forward past the campaign deadline
-        vm.warp(block.timestamp + 2 days);
+        vm.warp(block.timestamp + 9 days);
 
         // Check balances before refund
         uint256 donorBalanceBefore = usdc.balanceOf(donor);
@@ -120,7 +120,7 @@ contract CrowdFundingTest is Test {
         vm.prank(campaignOwner);
         uint256 campaignId = crowdFunding.createCampaign(
             50 * 1e6, // 50 USDC target
-            block.timestamp + 1 days,
+            block.timestamp + 8 days,
             keccak256(abi.encodePacked("withdraw_test"))
         );
 
@@ -131,7 +131,7 @@ contract CrowdFundingTest is Test {
         vm.stopPrank();
 
         // Fast forward past deadline
-        vm.warp(block.timestamp + 2 days);
+        vm.warp(block.timestamp + 9 days);
 
         uint256 ownerBalanceBefore = usdc.balanceOf(campaignOwner);
 
@@ -155,7 +155,7 @@ contract CrowdFundingTest is Test {
         vm.prank(campaignOwner);
         uint256 campaignId = crowdFunding.createCampaign(
             50 * 1e6,
-            block.timestamp + 1 days,
+            block.timestamp + 8 days,
             keccak256(abi.encodePacked("not_owner_test"))
         );
 
@@ -165,7 +165,7 @@ contract CrowdFundingTest is Test {
         crowdFunding.donateToCampaign(campaignId, 60 * 1e6);
         vm.stopPrank();
 
-        vm.warp(block.timestamp + 2 days);
+        vm.warp(block.timestamp + 9 days);
 
         // Non-owner tries to withdraw
         vm.prank(donor);
@@ -177,7 +177,7 @@ contract CrowdFundingTest is Test {
         vm.prank(campaignOwner);
         uint256 campaignId = crowdFunding.createCampaign(
             100 * 1e6, // 100 USDC target
-            block.timestamp + 1 days,
+            block.timestamp + 8 days,
             keccak256(abi.encodePacked("target_not_reached_test"))
         );
 
@@ -187,7 +187,7 @@ contract CrowdFundingTest is Test {
         crowdFunding.donateToCampaign(campaignId, 50 * 1e6); // Below target
         vm.stopPrank();
 
-        vm.warp(block.timestamp + 2 days);
+        vm.warp(block.timestamp + 9 days);
 
         // Try to withdraw
         vm.prank(campaignOwner);
@@ -220,12 +220,12 @@ contract CrowdFundingTest is Test {
         vm.prank(campaignOwner);
         uint256 campaignId = crowdFunding.createCampaign(
             100 * 1e6,
-            block.timestamp + 1 days,
+            block.timestamp + 8 days,
             keccak256("expired_campaign_test")
         );
 
         // Fast forward past deadline
-        vm.warp(block.timestamp + 2 days);
+        vm.warp(block.timestamp + 9 days);
 
         // Try to donate after deadline
         vm.startPrank(donor);
